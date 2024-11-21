@@ -1,8 +1,11 @@
+#include <iostream>
+#include <ostream>
 #include <tuple>
 #include <vector>
 #include <fstream>
 #include <algorithm>
 #include <cmath>
+#include "tinybvh/tiny_bvh.h"
 
 struct vec3 {
     float x=0, y=0, z=0;
@@ -125,6 +128,9 @@ vec3 cast_ray(const vec3 &orig, const vec3 &dir, const int depth=0) {
 }
 
 int main() {
+    // Proof that tinybvh is correctly loaded
+    std::cout << tinybvh::tinybvh_max(10, 0) << std::endl;
+
     constexpr int   width  = 1024;
     constexpr int   height = 768;
     constexpr float fov    = 1.05; // 60 degrees field of view in radians
