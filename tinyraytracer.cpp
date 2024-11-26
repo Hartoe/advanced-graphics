@@ -1,11 +1,8 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
-#include <limits>
 #include <iostream>
-#include <fstream>
 #include <vector>
 #include <algorithm>
-#include "tinybvh/tiny_bvh.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
@@ -15,9 +12,12 @@
 #include "model.h"
 #include "geometry.h"
 
+#include "bvh.h"
+
 int envmap_width, envmap_height;
 std::vector<Vec3f> envmap;
 Model duck("../bunny.obj");
+BVH accel_structure(duck);
 
 struct Light {
     Light(const Vec3f &p, const float i) : position(p), intensity(i) {}
@@ -68,40 +68,11 @@ Vec3f refract(const Vec3f &I, const Vec3f &N, const float eta_t, const float eta
 }
 
 bool scene_intersect(const Vec3f &orig, const Vec3f &dir, const std::vector<Sphere> &spheres, Vec3f &hit, Vec3f &N, Material &material) {
-    float duck_dist = std::numeric_limits<float>::max();
-    for (size_t i=0; i < duck.nfaces(); i++) {
-        float dist_i;
-        if (duck.ray_triangle_intersect(i, orig, dir, dist_i) && dist_i < duck_dist) {
-            duck_dist = dist_i;
-            hit = orig + dir*dist_i;
-            N = duck.triangle_normal(i).normalize();
-            material = spheres[0].material;
-        }
-    }
 
-    float spheres_dist = std::numeric_limits<float>::max();
-    // for (size_t i=0; i < spheres.size(); i++) {
-    //     float dist_i;
-    //     if (spheres[i].ray_intersect(orig, dir, dist_i) && dist_i < spheres_dist && dist_i < duck_dist) {
-    //         spheres_dist = dist_i;
-    //         hit = orig + dir*dist_i;
-    //         N = (hit - spheres[i].center).normalize();
-    //         material = spheres[i].material;
-    //     }
-    // }
+    Material red_rubber(1.0, Vec4f(0.9,  0.1, 0.0, 0.0), Vec3f(0.3, 0.1, 0.1),   10.);
+    material = red_rubber;
+    return accel_structure.scene_intersect(orig, dir, hit, N);
 
-    float checkerboard_dist = std::numeric_limits<float>::max();
-    // if (fabs(dir.y)>1e-3)  {
-    //     float d = -(orig.y+4)/dir.y; // the checkerboard plane has equation y = -4
-    //     Vec3f pt = orig + dir*d;
-    //     if (d>0 && fabs(pt.x)<10 && pt.z<-10 && pt.z>-30 && d<spheres_dist && d<duck_dist) {
-    //         checkerboard_dist = d;
-    //         hit = pt;
-    //         N = Vec3f(0,1,0);
-    //         material.diffuse_color = (int(.5*hit.x+1000) + int(.5*hit.z)) & 1 ? Vec3f(.3, .3, .3) : Vec3f(.3, .2, .1);
-    //     }
-    // }
-    return std::min(std::min(spheres_dist, checkerboard_dist), duck_dist)<1000;
 }
 
 Vec3f cast_ray(const Vec3f &orig, const Vec3f &dir, const std::vector<Sphere> &spheres, const std::vector<Light> &lights, size_t depth=0) {
