@@ -1,6 +1,6 @@
 [submodule "lib/stb"]
 	path = lib/stb
-	url = https://github.com/nothings/stb
+	url = https://github.com/nothings/stb.git
 [submodule "tinybvh"]
 	path = tinybvh
 	url = https://github.com/jbikker/tinybvh.git
