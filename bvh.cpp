@@ -1,7 +1,17 @@
 #include "bvh.h"
+#include "geometry.h"
+
+struct BVHNode
+{
+    Vec3f aabbMin, aabbMax;
+    uint leftFirst, triCount;
+};
 
 BVH::BVH(Model scene) : scene(scene) {
     //TODO contruct bvh
+    for (int i=0; i < scene.nfaces(); i++) {
+        std::cout << scene.centroid(i) << std::endl;
+    }
 }
 
 bool BVH::scene_intersect(const Vec3f &orig, const Vec3f &dir,  Vec3f &hit, Vec3f &N){

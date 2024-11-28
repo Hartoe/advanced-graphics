@@ -6,7 +6,7 @@
 #include "geometry.h"
 
 // fills verts and faces arrays, supposes .obj file to have "f " entries without slashes
-Model::Model(const char *filename) : verts(), faces() {
+Model::Model(const char *filename) : verts(), faces(), centroids() {
     std::ifstream in;
     in.open (filename, std::ifstream::in);
     if (in.fail()) {
@@ -26,15 +26,22 @@ Model::Model(const char *filename) : verts(), faces() {
         } else if (!line.compare(0, 2, "f ")) {
             Vec3i f;
             int idx, cnt=0;
-            iss >> trash;
+iss >> trash;
             while (iss >> idx) {
                 idx--; // in wavefront obj all indices start at 1, not zero
                 f[cnt++] = idx;
             }
             if (3==cnt) faces.push_back(f);
         }
+        
     }
     std::cerr << "# v# " << verts.size() << " f# "  << faces.size() << std::endl;
+
+    for (int i=0; i < nfaces(); i++){
+        Vec3f centroid = point(vert(i, 0)) + point(vert(i, 1)) + point(vert(i, 2));
+        centroid = centroid * 0.3333333333f;
+        centroids.push_back(centroid);
+    }
 
     Vec3f min, max;
     get_bbox(min, max);
@@ -100,6 +107,10 @@ Vec3f &Model::point(int i) {
 int Model::vert(int fi, int li) const {
     assert(fi>=0 && fi<nfaces() && li>=0 && li<3);
     return faces[fi][li];
+}
+
+Vec3f &Model::centroid(int i) {
+    return centroids[i];
 }
 
 std::ostream& operator<<(std::ostream& out, Model &m) {
