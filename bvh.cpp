@@ -12,13 +12,21 @@ BVH::BVH(Model scene) : scene(scene), tris(), nodes() {
         tris.push_back(t);
     }
 
+    for (int i=0; i < scene.nfaces() * 2 - 1; i++) {
+        nodes.push_back(BVHNode{});
+    }
+
     // assign all triangles to root node
     BVHNode& root = nodes[0];
     root.leftFirst = 0;
     root.triCount = tris.size();
+    // std::cout << "Tris:" << std::endl;
+    // std::cout << tris.size() << std::endl;
     updateNodeBounds(0);
     // subdivide recursively
     subdivide(0);
+    std::cout << "done generating" << std::endl;
+    // std::cout << nodesUsed << std::endl;
 }
 
 void BVH::updateNodeBounds(int nodeid) {
@@ -32,9 +40,9 @@ void BVH::updateNodeBounds(int nodeid) {
         node.aabbMin = min(node.aabbMin, t.v0);
         node.aabbMin = min(node.aabbMin, t.v1);
         node.aabbMin = min(node.aabbMin, t.v2);
-        node.aabbMax = min(node.aabbMax, t.v0);
-        node.aabbMax = min(node.aabbMax, t.v1);
-        node.aabbMax = min(node.aabbMax, t.v2);
+        node.aabbMax = max(node.aabbMax, t.v0);
+        node.aabbMax = max(node.aabbMax, t.v1);
+        node.aabbMax = max(node.aabbMax, t.v2);
     }
 }
 
@@ -50,6 +58,8 @@ void BVH::subdivide(int nodeid) {
 
     int i = node.leftFirst;
     int j = i + node.triCount - 1;
+    // std::cout << node.aabbMax << std::endl;
+    // std::cout << node.aabbMin << std::endl;
     while (i <= j)
     {
         if (tris[i].centroid[axis] < splitPos)
@@ -60,10 +70,16 @@ void BVH::subdivide(int nodeid) {
 
     // abort split if one of the sides is empty
     int leftCount = i - node.leftFirst;
+    // std::cout << "Before early exit" << std::endl;
+    // std::cout << leftCount << std::endl;
     if (leftCount == 0 || leftCount == node.triCount) return;
+    // std::cout << "after early exit" << std::endl;
     // create child nodes
     int leftChildIdx = nodesUsed++;
     int rightChildIdx = nodesUsed++;
+    if (nodesUsed % (nodesUsed/10) == 0){
+        std::cout << nodesUsed << std::endl;
+    }
     nodes[leftChildIdx].leftFirst = node.leftFirst;
     nodes[leftChildIdx].triCount = leftCount;
     nodes[rightChildIdx].leftFirst = i;
@@ -79,11 +95,13 @@ void BVH::subdivide(int nodeid) {
 
 void BVH::IntersectBVH( const Vec3f &orig, const Vec3f &dir, float &tnear, const uint nodeIdx, Vec3f &N)
 {
+    traversal_steps++;
     BVHNode& node = nodes[nodeIdx];
     if (!IntersectAABB( orig, dir, node.aabbMin, node.aabbMax, tnear)) return;
     if (node.triCount > 0)
     {
         for (int i = 0; i < node.triCount; i++ ){
+            triangle_intersection_tests++;
             if (scene.ray_triangle_intersect(i, orig, dir, tnear)) {
                 N = scene.triangle_normal(i).normalize();
             }
@@ -122,7 +140,7 @@ float BVH::min(float f1, float f2){
     }
 }
 float BVH::max(float f1, float f2){
-    if (f1 > f2){
+    if (f1 >= f2){
         return f1;
     } else {
         return f2;

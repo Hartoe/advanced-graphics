@@ -28,5 +28,7 @@ private:
     int nodesUsed = 1;
 public:
     BVH(Model scene);
+    int triangle_intersection_tests = 0;
+    int traversal_steps = 0;
     bool scene_intersect(const Vec3f &orig, const Vec3f &dir,  Vec3f &hit, Vec3f &N); // Material?
 };
