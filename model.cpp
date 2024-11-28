@@ -6,7 +6,7 @@
 #include "geometry.h"
 
 // fills verts and faces arrays, supposes .obj file to have "f " entries without slashes
-Model::Model(const char *filename) : verts(), faces(), centroids() {
+Model::Model(const char *filename) : verts(), faces() {
     std::ifstream in;
     in.open (filename, std::ifstream::in);
     if (in.fail()) {
@@ -37,12 +37,6 @@ iss >> trash;
     }
     std::cerr << "# v# " << verts.size() << " f# "  << faces.size() << std::endl;
 
-    for (int i=0; i < nfaces(); i++){
-        Vec3f centroid = point(vert(i, 0)) + point(vert(i, 1)) + point(vert(i, 2));
-        centroid = centroid * 0.3333333333f;
-        centroids.push_back(centroid);
-    }
-
     Vec3f min, max;
     get_bbox(min, max);
 }
@@ -63,8 +57,11 @@ bool Model::ray_triangle_intersect(const int &fi, const Vec3f &orig, const Vec3f
     float v = dir*qvec;
     if (v < 0 || u + v > det) return false;
 
-    tnear = edge2*qvec * (1./det);
-    return tnear>1e-5;
+    float t = edge2*qvec * (1./det);
+    if (t>1e-5 && t < tnear) {
+        tnear = t;
+        return true;
+    }
 }
 
 
@@ -107,10 +104,6 @@ Vec3f &Model::point(int i) {
 int Model::vert(int fi, int li) const {
     assert(fi>=0 && fi<nfaces() && li>=0 && li<3);
     return faces[fi][li];
-}
-
-Vec3f &Model::centroid(int i) {
-    return centroids[i];
 }
 
 std::ostream& operator<<(std::ostream& out, Model &m) {

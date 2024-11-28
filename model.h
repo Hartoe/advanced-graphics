@@ -5,7 +5,6 @@
 
 class Model {
 private:
-    std::vector<Vec3f> centroids;
     std::vector<Vec3f> verts;
     std::vector<Vec3i> faces;
 public:
