@@ -1,5 +1,4 @@
 # Ignore content built with CMake
 build/
-lib/
 .cache/
 
