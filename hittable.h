@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "aabb.h"
+#include "stat_collector.h"
 
 class material;
 
@@ -11,6 +12,7 @@ class hit_record {
     point p;
     vec3 normal;
     shared_ptr<material> mat;
+    shared_ptr<stat_collector> stats;
     double t;
     double u;
     double v;

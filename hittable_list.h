@@ -22,6 +22,7 @@ class hittable_list : public hittable {
 
         bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
             hit_record temp_rec;
+            temp_rec.stats = rec.stats;
             bool hit_anything = false;
             auto closest = ray_t.max;
 

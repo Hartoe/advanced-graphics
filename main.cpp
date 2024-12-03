@@ -94,6 +94,7 @@ void quads() {
     cam.aspect_ratio = 1.0;
     cam.width = 400;
     cam.samples_per_pixel = 100;
+    cam.stats->samples_per_pixel = 100;
     cam.max_depth = 50;
 
     cam.vfov = 80;
@@ -118,6 +119,7 @@ void triangles() {
     cam.aspect_ratio = 1.0;
     cam.width = 400;
     cam.samples_per_pixel = 100;
+    cam.stats->samples_per_pixel = 100;
     cam.max_depth = 50;
 
     cam.vfov = 80;
@@ -144,7 +146,8 @@ void meshes() {
 
     cam.aspect_ratio = 1.0;
     cam.width = 400;
-    cam.samples_per_pixel = 100;
+    cam.samples_per_pixel = 1;
+    cam.stats->samples_per_pixel = 1;
     cam.max_depth = 50;
 
     cam.vfov = 80;
@@ -169,7 +172,8 @@ void test_model() {
 
     cam.aspect_ratio = 1.0;
     cam.width = 400;
-    cam.samples_per_pixel = 50;
+    cam.samples_per_pixel = 1;
+    cam.stats->samples_per_pixel = 1;
     cam.max_depth = 20;
 
     cam.vfov = 90;

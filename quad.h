@@ -25,6 +25,7 @@ class quad : public hittable {
         aabb bounding_box() const override { return bbox; }
 
         bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
+            rec.stats->record_intersection_test();
             auto denom = dot(normal, r.direction());
 
             if (std::fabs(denom) < 1e-8)
