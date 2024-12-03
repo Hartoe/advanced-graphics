@@ -1,5 +1,6 @@
 #include "common.h"
 #include "bvh.h"
+#include "kdtree.h"
 #include "camera.h"
 #include "hittable.h"
 #include "hittable_list.h"
@@ -8,6 +9,8 @@
 #include "quad.h"
 #include "mesh.h"
 #include "model.h"
+
+#include <time.h>
 
 void random_spheres() {
     hittable_list world;
@@ -157,24 +160,54 @@ void meshes() {
     cam.render(world);
 }
 
-void test_model() {
+void bunny() {
     hittable_list world;
 
-    auto material = make_shared<metal>(color(0.8, 0.5, 0.2), 0.1);
+    auto mat_bunny = make_shared<metal>(color(0.8, 0.5, 0.2), 0.1);
+    auto mat_ground = make_shared<lambertian>(color(0.7, 0.5, 0.5));
 
-    world.add(make_shared<model>("bunny.obj", material));
-    world = hittable_list(make_shared<bvh_node>(world));
+    world.add(make_shared<model>("models/bunny.obj", mat_bunny));
+    world.add(make_shared<sphere>(point(0, -1000, 0), 1000.04, mat_ground));
+    world = hittable_list(make_shared<kd_node>(world));
+    //world = hittable_list(make_shared<bvh_node>(world));
 
     camera cam;
 
-    cam.aspect_ratio = 1.0;
+    cam.aspect_ratio = 1;
     cam.width = 400;
-    cam.samples_per_pixel = 50;
-    cam.max_depth = 20;
+    cam.samples_per_pixel = 20;
+    cam.max_depth = 10;
 
     cam.vfov = 90;
-    cam.lookfrom = point(-0.05, 0.15, 0.1);
-    cam.lookat = point(0, 0.1, 0);
+    cam.lookfrom = point(-0.04, 0.14, 0.11);
+    cam.lookat = point(-0.04, 0.1, 0);
+    cam.vup = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+
+    cam.render(world);
+}
+
+void cube() {
+    hittable_list world;
+
+    auto mat_bunny = make_shared<metal>(color(0.8, 0.5, 0.2), 0.1);
+    auto mat_ground = make_shared<lambertian>(color(0.7, 0.5, 0.5));
+
+    world.add(make_shared<model>("models/cube.obj", mat_bunny));
+    world.add(make_shared<sphere>(point(0, -1000, 0), 1000, mat_ground));
+    world = hittable_list(make_shared<kd_node>(world));
+
+    camera cam;
+
+    cam.aspect_ratio = 1;
+    cam.width = 400;
+    cam.samples_per_pixel = 20;
+    cam.max_depth = 10;
+
+    cam.vfov = 90;
+    cam.lookfrom = point(1.2, 1.5, 2);
+    cam.lookat = point(0, 0, 0);
     cam.vup = vec3(0, 1, 0);
 
     cam.defocus_angle = 0;
@@ -184,13 +217,19 @@ void test_model() {
 
 int main()
 {
+    auto clkStart = clock();
+
     switch(4) {
         case 0: random_spheres(); break;
         case 1: quads(); break;
         case 2: triangles(); break;
         case 3: meshes(); break;
-        case 4: test_model(); break;
+        case 4: bunny(); break;
+        case 5: cube(); break;
     }
+
+    auto clkFinish = clock();
+    std::cout << clkFinish - clkStart << std::endl;
 
     return 0;
 }

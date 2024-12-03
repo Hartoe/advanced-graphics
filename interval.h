@@ -9,7 +9,10 @@ class interval {
 
         interval() : min(+infinity), max(-infinity) {}
 
-        interval(double min, double max) : min(min), max(max) {}
+        interval(double _min, double _max) {
+            min = _min <= _max ? _min : _max;
+            max = _max >= _min ? _max : _min;
+        }
 
         interval(const interval& a, const interval& b) {
             min = a.min <= b.min ? a.min : b.min;

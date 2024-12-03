@@ -2,7 +2,7 @@
 #define MODEL_H
 
 #include "mesh.h"
-#include "bvh.h"
+#include "kdtree.h"
 
 #include <cstring>
 
@@ -15,7 +15,8 @@ class model : public hittable {
             loadOBJ(path, vertices, face_indices);
 
             _mesh = mesh(vertices, face_indices, mat);
-            _mesh = hittable_list(make_shared<bvh_node>(_mesh)); // TODO: Make this optional
+            _mesh = hittable_list(make_shared<kd_node>(_mesh)); // TODO: Make this optional
+            //_mesh = hittable_list(make_shared<bvh_node>(_mesh)); // TODO: Make this optional
         }
 
         aabb bounding_box() const override { return _mesh.bounding_box(); }

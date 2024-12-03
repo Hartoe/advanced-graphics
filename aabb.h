@@ -33,7 +33,7 @@ class aabb {
             if (n == 2) return z;
             return x;
         }
-
+        
         bool hit(const ray& r, interval ray_t) const {
             const point& ray_orig = r.origin();
             const vec3& ray_dir = r.direction();
