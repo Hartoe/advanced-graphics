@@ -1,29 +1,21 @@
-#ifndef __MODEL_H__
-#define __MODEL_H__
-#include <vector>
-#include "geometry.h"
+// #ifndef MODEL_H
+// #define MODEL_H
 
-class Model {
-private:
-    std::vector<Vec3f> verts;
-    std::vector<Vec3i> faces;
-public:
-    Model(const char *filename);
+// #include "mesh.h"
 
-    int nverts() const;                          // number of vertices
-    int nfaces() const;                          // number of triangles
+// class model : public hittable {
+//     public:
+//         model(std::string& path) {
+//             // load .obj file
+//             // parse .obj file
+//             // create vertices and face_indices
+//             // create mesh -> bvh_node
+//         }
+//     private:
+//         mesh mesh;
+//     /*
+//         model(path) -> loads from .obj file and creates a mesh object, which is a bvh_node
+//     */
+// };
 
-    bool ray_triangle_intersect(const int &fi, const Vec3f &orig, const Vec3f &dir, float &tnear);
-    Vec3f triangle_normal(const int &fi);
-
-    const Vec3f &point(int i) const;                   // coordinates of the vertex i
-    Vec3f &point(int i);                   // coordinates of the vertex i
-    int vert(int fi, int li) const;              // index of the vertex for the triangle fi and local index li
-    void get_bbox(Vec3f &min, Vec3f &max); // bounding box for all the vertices, including isolated ones
-    Vec3f &centroid(int i);
-};
-
-std::ostream& operator<<(std::ostream& out, Model &m);
-
-#endif //__MODEL_H__
-
+// #endif
