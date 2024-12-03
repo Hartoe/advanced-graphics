@@ -2,6 +2,7 @@
 #define CAMERA_H
 
 #include <fstream>
+#include <memory>
 
 #include "hittable.h"
 #include "material.h"
@@ -73,8 +74,10 @@ class camera {
                 return color(0,0,0);
 
             hit_record rec;
+            rec.stats = stats;
 
             if (world.hit(r, interval(0.0001, infinity), rec)) {
+                rec.stats->freeze = true;
                 ray scattered;
                 color attenuation;
                 if (rec.mat->scatter(r, rec, attenuation, scattered))
@@ -89,7 +92,7 @@ class camera {
     public:
         double aspect_ratio = 1.0;
         int width = 100;
-        int samples_per_pixel = 10;
+        int samples_per_pixel = 1;
         int max_depth = 10;
         double vfov = 90;
         point lookfrom = point(0, 0, 0);
@@ -97,6 +100,11 @@ class camera {
         vec3 vup = point(0, 1, 0);
         double defocus_angle = 0;
         double focus_dist = 10;
+        std::shared_ptr<stat_collector> stats;
+
+        camera(){
+            stats = std::make_shared<stat_collector>(stat_collector(samples_per_pixel));
+        }
 
         void render(const hittable& world) {
             initialize();
@@ -113,15 +121,21 @@ class camera {
                     color pixel_color(0,0,0);
                     for (int sample = 0; sample < samples_per_pixel; sample++)
                     {
+                        stats->new_row();
                         ray r = get_ray(x, y);
                         pixel_color += ray_color(r, max_depth, world);
+                        stats->next_sample();
                     }
                     
+                    stats->next_pixel();
                     write_color(image, pixel_sample_scale * pixel_color);
                 }
             }
 
             image.close();
+            stats->save_csv();
+            stats->save_intersection_tests_image(width, height);
+            stats->save_traversal_step_image(width, height);
             std::clog << "\rDone!                                                   \n";
         }
 

@@ -97,6 +97,7 @@ void quads() {
     cam.aspect_ratio = 1.0;
     cam.width = 400;
     cam.samples_per_pixel = 100;
+    cam.stats->samples_per_pixel = 100;
     cam.max_depth = 50;
 
     cam.vfov = 80;
@@ -121,6 +122,7 @@ void triangles() {
     cam.aspect_ratio = 1.0;
     cam.width = 400;
     cam.samples_per_pixel = 100;
+    cam.stats->samples_per_pixel = 100;
     cam.max_depth = 50;
 
     cam.vfov = 80;
@@ -147,7 +149,8 @@ void meshes() {
 
     cam.aspect_ratio = 1.0;
     cam.width = 400;
-    cam.samples_per_pixel = 100;
+    cam.samples_per_pixel = 1;
+    cam.stats->samples_per_pixel = 1;
     cam.max_depth = 50;
 
     cam.vfov = 80;
@@ -176,7 +179,8 @@ void bunny() {
     cam.aspect_ratio = 1;
     cam.width = 400;
     cam.samples_per_pixel = 20;
-    cam.max_depth = 10;
+    cam.stats->samples_per_pixel = 1;
+    cam.max_depth = 20;
 
     cam.vfov = 90;
     cam.lookfrom = point(-0.04, 0.14, 0.11);

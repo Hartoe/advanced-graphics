@@ -37,6 +37,7 @@ class bvh_node : public hittable {
         }
 
         bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
+            rec.stats->record_traversal_step();
             if (!bbox.hit(r, ray_t))
                 return false;
 

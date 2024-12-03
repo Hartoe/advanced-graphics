@@ -1,4 +1,10 @@
 # Ignore content built with CMake
 build/
 .cache/
-
+.vscode/
+main
+main.exe
+image.ppm
+traversals.ppm
+intersections.ppm
+stats.csv
