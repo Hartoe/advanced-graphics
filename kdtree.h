@@ -77,7 +77,7 @@ class kd_node : public hittable {
             // find first element that is bigger than midway turn
             auto elem = std::find_if(std::begin(objects) + start, std::begin(objects) + end, [axis, midway](const shared_ptr<hittable>& obj){
                 auto obj_axis = obj->bounding_box().axis_interval(axis);
-                return obj_axis.min > midway;
+                return obj_axis.min >= midway;
             });
             auto index = elem-objects.begin();
             if (index >= objects.size())
