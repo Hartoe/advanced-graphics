@@ -1,9 +1,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include <fstream>
-#include <memory>
-
+#include "common.h"
 #include "hittable.h"
 #include "material.h"
 
@@ -106,10 +104,10 @@ class camera {
             stats = std::make_shared<stat_collector>(stat_collector(samples_per_pixel));
         }
 
-        void render(const hittable& world) {
+        void render(const hittable& world, const char* path = "image.ppm") {
             initialize();
 
-            std::ofstream image("image.ppm");
+            std::ofstream image(path);
 
             image << "P3\n" << width << ' ' << height << "\n255\n";
 
@@ -131,12 +129,11 @@ class camera {
                     write_color(image, pixel_sample_scale * pixel_color);
                 }
             }
-
             image.close();
+            std::clog << "\rRendering Done!                                                   \n";
             stats->save_csv();
             stats->save_intersection_tests_image(width, height);
             stats->save_traversal_step_image(width, height);
-            std::clog << "\rDone!                                                   \n";
         }
 
         void print_loading(int progress) {

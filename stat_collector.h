@@ -5,16 +5,16 @@
 
 class stat_collector {
 private:
-    uint pixel_index = 0;
-    uint sample_index = 0;
+    unsigned int pixel_index = 0;
+    unsigned int sample_index = 0;
 public:
-    uint samples_per_pixel;
+    unsigned int samples_per_pixel;
     std::vector<int> n_intersection_tests;
     std::vector<int> n_traversal_steps;
     std::vector<int> sample_indeces;
     std::vector<int> pixel_indeces;
     bool freeze = false;
-    stat_collector(uint p_samples_per_pixel = 1) : n_intersection_tests(), n_traversal_steps(), sample_indeces(), pixel_indeces() {
+    stat_collector(unsigned int p_samples_per_pixel = 1) : n_intersection_tests(), n_traversal_steps(), sample_indeces(), pixel_indeces() {
         samples_per_pixel = p_samples_per_pixel;
     }
     void next_sample(){

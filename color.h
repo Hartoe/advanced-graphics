@@ -1,10 +1,7 @@
 #ifndef COLOR_H
 #define COLOR_H
 
-#include <fstream>
-
-#include "interval.h"
-#include "vec3.h"
+#include "common.h"
 
 // For ease of use
 using color = vec3;

@@ -2,21 +2,23 @@
 #define MODEL_H
 
 #include "mesh.h"
-#include "kdtree.h"
+#include "accelerate.h"
 
 #include <cstring>
 
 class model : public hittable {
     public:
-        model(const char* path, shared_ptr<material> mat)
+        model(const char* path, shared_ptr<material> mat, const char* mode = "brute")
         {
             std::vector<vec3> vertices;
             std::vector<vec3> face_indices;
             loadOBJ(path, vertices, face_indices);
 
             _mesh = mesh(vertices, face_indices, mat);
-            _mesh = hittable_list(make_shared<kd_node>(_mesh)); // TODO: Make this optional
-            //_mesh = hittable_list(make_shared<bvh_node>(_mesh)); // TODO: Make this optional
+            if (strcmp(mode, "bvh") == 0)
+                _mesh = hittable_list(make_shared<bvh_node>(_mesh));
+            else if (strcmp(mode, "kd") == 0)
+                _mesh = hittable_list(make_shared<kd_node>(_mesh));
         }
 
         aabb bounding_box() const override { return _mesh.bounding_box(); }

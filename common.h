@@ -6,6 +6,8 @@
 #include <limits>
 #include <memory>
 #include <random>
+#include <algorithm>
+#include <fstream>
 
 using std::make_shared;
 using std::shared_ptr;
@@ -31,9 +33,8 @@ inline int random_int(int min, int max) {
     return int(random_double(min, max+1));
 }
 
+#include "geometry.h"
 #include "color.h"
-#include "interval.h"
-#include "ray.h"
-#include "vec3.h"
+#include "parser.h"
 
 #endif

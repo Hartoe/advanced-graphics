@@ -1,8 +1,7 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include "quad.h"
-#include "hittable_list.h"
+#include "primitive.h"
 
 class mesh : public hittable_list {
     public:
