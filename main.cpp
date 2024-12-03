@@ -7,6 +7,7 @@
 #include "sphere.h"
 #include "quad.h"
 #include "mesh.h"
+#include "model.h"
 
 void random_spheres() {
     hittable_list world;
@@ -156,13 +157,39 @@ void meshes() {
     cam.render(world);
 }
 
+void test_model() {
+    hittable_list world;
+
+    auto material = make_shared<metal>(color(0.8, 0.5, 0.2), 0.1);
+
+    world.add(make_shared<model>("bunny.obj", material));
+    world = hittable_list(make_shared<bvh_node>(world));
+
+    camera cam;
+
+    cam.aspect_ratio = 1.0;
+    cam.width = 400;
+    cam.samples_per_pixel = 50;
+    cam.max_depth = 20;
+
+    cam.vfov = 90;
+    cam.lookfrom = point(-0.05, 0.15, 0.1);
+    cam.lookat = point(0, 0.1, 0);
+    cam.vup = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+
+    cam.render(world);
+}
+
 int main()
 {
-    switch(3) {
+    switch(4) {
         case 0: random_spheres(); break;
         case 1: quads(); break;
         case 2: triangles(); break;
         case 3: meshes(); break;
+        case 4: test_model(); break;
     }
 
     return 0;
