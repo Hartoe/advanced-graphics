@@ -67,8 +67,9 @@ class bvh_node : public node {
                                           : box_z_compare;
 
             size_t object_span = end - start;
-
-            if (object_span == 1) {
+            if (object_span <= 0) {
+                throw std::invalid_argument("Whoops, Something broke!");
+            } else if (object_span == 1) {
                 left = right = objects[start];
             } else if (object_span == 2) {
                 left = objects[start];
@@ -120,24 +121,32 @@ class kd_node : public node {
 
             if (object_span <= min_primitive_count || depth > max_depth) {
                 std::vector<shared_ptr<hittable>> list;
-                for (int i = 0; i < object_span; i++)
-                    list.push_back(objects[start+i]);
-                left = right = make_shared<hittable_list>(list);
+                list.assign(objects.begin()+start, objects.begin()+end);
+                left = make_shared<hittable_list>(list);
+                right = make_shared<hittable_list>();
             } else {
                 std::sort(std::begin(objects) + start, std::begin(objects) + end, comparator);
-
-                auto mid = get_turning_point(objects, start, end, axis);
                 auto half = bbox.axis_interval(axis).size() / 2;
+                auto midway = bbox.axis_interval(axis).min + half;
 
-                aabb left_bbox = aabb((axis == 0) ? interval(bbox.x.min, bbox.x.min + half) : bbox.x,
-                                      (axis == 1) ? interval(bbox.y.min, bbox.y.min + half) : bbox.y,
-                                      (axis == 2) ? interval(bbox.z.min, bbox.z.min + half) : bbox.z);
-                aabb right_bbox = aabb((axis == 0) ? interval(bbox.x.min + half, bbox.x.max) : bbox.x,
-                                       (axis == 1) ? interval(bbox.y.min + half, bbox.y.max) : bbox.y,
-                                       (axis == 2) ? interval(bbox.z.min + half, bbox.z.max) : bbox.z);
+                auto left_point = get_left_point(objects, start, end, axis, midway);
+                auto right_point = get_right_point(objects, start, end, axis, midway);
 
-                left = make_shared<kd_node>(objects, start, mid, depth+1, left_bbox);
-                right = make_shared<kd_node>(objects, mid, end, depth+1, right_bbox);
+                aabb left_bbox, right_bbox;
+
+                if (axis == 0) {
+                    left_bbox = aabb(interval(bbox.x.min, bbox.x.min + half), bbox.y, bbox.z);
+                    right_bbox = aabb(interval(bbox.x.min + half, bbox.x.max), bbox.y, bbox.z);
+                } else if (axis == 1) {
+                    left_bbox = aabb(bbox.x, interval(bbox.y.min, bbox.y.min + half), bbox.z);
+                    right_bbox = aabb(bbox.x, interval(bbox.y.min + half, bbox.y.max), bbox.z);
+                } else {
+                    left_bbox = aabb(bbox.x, bbox.y, interval(bbox.z.min, bbox.z.min + half));
+                    right_bbox = aabb(bbox.x, bbox.y, interval(bbox.z.min + half, bbox.z.max));
+                }
+
+                left = make_shared<kd_node>(objects, start, left_point, depth+1, left_bbox);
+                right = make_shared<kd_node>(objects, right_point, end, depth+1, right_bbox);
             }
         }
 
@@ -154,8 +163,8 @@ class kd_node : public node {
 
         aabb bounding_box() const override { return bbox; }
     private:
-        static const int min_primitive_count = 10;
-        static const int max_depth = 50;
+        static const int min_primitive_count = 2;
+        static const int max_depth = 30;
         int depth;
         shared_ptr<hittable> left;
         shared_ptr<hittable> right;
@@ -168,17 +177,27 @@ class kd_node : public node {
             return 2;
         }
 
-        size_t get_turning_point(const std::vector<shared_ptr<hittable>>& objects, size_t start, size_t end, int axis) {
-            // Get midway axis length
-            auto midway = bbox.axis_interval(axis).min + bbox.axis_interval(axis).size() / 2;
-
+        size_t get_left_point(const std::vector<shared_ptr<hittable>>& objects, size_t start, size_t end, int axis, double midway) {
             // find first element that is bigger than midway turn
             auto elem = std::find_if(std::begin(objects) + start, std::begin(objects) + end, [axis, midway](const shared_ptr<hittable>& obj){
                 auto obj_axis = obj->bounding_box().axis_interval(axis);
-                return obj_axis.min >= midway;
+                return obj_axis.min > midway;
             });
             auto index = elem-objects.begin();
-            if (index >= objects.size())
+            if (index >= objects.size() || index < 0)
+                return end;
+
+            return index;
+        }
+
+        size_t get_right_point(const std::vector<shared_ptr<hittable>>& objects, size_t start, size_t end, int axis, double midway) {
+            // find first element that is bigger than midway turn
+            auto elem = std::find_if(std::begin(objects) + start, std::begin(objects) + end, [axis, midway](const shared_ptr<hittable>& obj){
+                auto obj_axis = obj->bounding_box().axis_interval(axis);
+                return obj_axis.max >= midway;
+            });
+            auto index = elem-objects.begin();
+            if (index >= objects.size() || index < 0)
                 return end;
 
             return index;

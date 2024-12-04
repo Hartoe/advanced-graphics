@@ -4,7 +4,6 @@ build/
 .vscode/
 main
 main.exe
-image.ppm
 traversals.ppm
 intersections.ppm
 stats.csv

@@ -5,13 +5,14 @@
 #include "material.h"
 #include "model.h"
 #include "primitive.h"
+#include "camera.h"
 
 #include <cstring>
 
 struct settings {
-    std::string infile = "";
-    std::string outfile = "";
-    std::string model = "";
+    std::string infile = "scenes/in.trace";
+    std::string outfile = "output/image.ppm";
+    std::string model = "bvh";
 };
 
 const settings parse_args(int argc, char* argv[]) {
@@ -21,10 +22,8 @@ const settings parse_args(int argc, char* argv[]) {
         
         // Check if flag, otherwise skip
         auto flag = std::string(opt).substr(0, 2);
-        std::cout << flag << std::endl;
-        std::cout << opt[0] << std::endl;
         if (opt[0] == '-'){
-            if (++i < argc) {
+            if ((i+1) < argc) {
                 const char* param = argv[i+1];
 
                 if (strcmp(flag.c_str(), "-m") == 0) {
@@ -41,7 +40,109 @@ const settings parse_args(int argc, char* argv[]) {
     return stng;
 }
 
-const hittable_list load_scene(const char* path, const char* mode) {
+const void parse_image_info(FILE* file, camera& cam) {
+    std::clog << "\rLoading Scene (Image Info)...               " << std::flush;
+    int width;
+    double aspect_w, aspect_h;
+    fscanf(file, "%i %lf/%lf", &width, &aspect_w, &aspect_h);
+    cam.width = width;
+    cam.aspect_ratio = aspect_w / aspect_h;
+    std::clog << "\rImage: " << width << " width, " << aspect_w << '/' << aspect_h << "             \n" << std::flush;
+}
+
+const void parse_camera_info(FILE* file, camera& cam) {
+    std::clog << "\rLoading Scene (Camera Info)...              " << std::flush;
+    double lfx, lfy, lfz;
+    double lax, lay, laz;
+    int upx, upy, upz;
+    double fov;
+    fscanf(file,
+            " (%lf %lf %lf) (%lf %lf %lf) (%i %i %i) %lf",
+            &lfx, &lfy, &lfz, &lax, &lay, &laz, &upx, &upy, &upz, &fov);
+    cam.lookfrom = point(lfx, lfy, lfz);
+    cam.lookat = point(lax, lay, laz);
+    cam.vup = vec3(upx, upy, upz);
+    cam.vfov = fov;
+    std::clog << "\rCamera: (" << lfx << ' ' << lfy << ' ' << lfz << ") ("
+        << lax << ' ' << lay << ' ' << laz << ") (" << upx << ' ' << upy
+        << ' ' << upz << ") " << fov << '\n' << std::flush;
+}
+
+const void parse_aa(FILE* file, camera& cam) {
+    std::clog << "\rLoading Scene (Anti-Aliasing)...            " << std::flush;
+    int samples;
+    fscanf(file, "%i", &samples);
+    cam.samples_per_pixel = samples;
+    std::clog << "\rAnti-Aliasing: " << samples << " samples per pixel         \n" << std::flush;
+}
+
+const void parse_depth(FILE* file, camera& cam) {
+    std::clog << "\rLoading Scene (Shadow Depth)...             " << std::flush;
+    int depth;
+    fscanf(file, "%i", &depth);
+    cam.max_depth = depth;
+    std::clog << "\rMax Bounce Depth: " << depth << "               \n" << std::flush;
+}
+
+const void parse_blur(FILE* file, camera& cam) {
+    std::clog << "\rLoading Scene (Defocus Blur)...             " << std::flush;
+    double blur;
+    fscanf(file, "%lf", &blur);
+    cam.defocus_angle = blur;
+    std::clog << "\rDefocus Angle: " << blur << "                   \n" << std::flush;
+}
+
+const shared_ptr<material> parse_material(FILE* file) {
+    char mat_str[3];
+    fscanf(file, "(%s ", mat_str);
+    double r, g, b;
+    if (strcmp(mat_str, "LAM") == 0) {
+        fscanf(file, "%lf %lf %lf)", &r, &g, &b);
+        return make_shared<lambertian>(color(r, g, b));
+    }
+    else if (strcmp(mat_str, "MET") == 0) {
+        double fuzz;
+        fscanf(file, "%lf %lf %lf %lf)", &r, &g, &b, &fuzz);
+        return make_shared<metal>(color(r, g, b), fuzz);
+    }
+    else if (strcmp(mat_str, "DIE") == 0) {
+        double index;
+        fscanf(file, "%lf)", &index);
+        return make_shared<dielectric>(index);
+    }
+
+    throw std::invalid_argument("Could not parse Material!");
+}
+
+const shared_ptr<model> parse_model(FILE* file, const char* mode) {
+    std::clog << "\rLoading Scene (Building Model)...           " << std::flush;
+    char model_path[128];
+    fscanf(file, "%s ", model_path);
+    shared_ptr<material> mat = parse_material(file);
+    return make_shared<model>(model_path, mat, mode);
+}
+
+const shared_ptr<sphere> parse_sphere(FILE* file) {
+    std::clog << "\rLoading Scene (Building Sphere)...          " << std::flush;
+    double x, y, z;
+    double radius;
+    fscanf(file, " (%lf %lf %lf) %lf ", &x, &y, &z, &radius);
+    shared_ptr<material> mat = parse_material(file);
+    return make_shared<sphere>(point(x, y, z), radius, mat);
+}
+
+const shared_ptr<quad> parse_quad(FILE* file) {
+    std::clog << "\rLoading Scene (Building Quad)...            " << std::flush;
+    double qx, qy, qz;
+    double ux, uy, uz;
+    double vx, vy, vz;
+    fscanf(file, " (%lf %lf %lf) (%lf %lf %lf) (%lf %lf %lf) ",
+            &qx, &qy, &qz, &ux, &uy, &uz, &vx, &vy, &vz);
+    shared_ptr<material> mat = parse_material(file);
+    return make_shared<quad>(point(qx, qy, qz), vec3(ux, uy, uz), vec3(vx, vy, vz), mat);
+}
+
+const hittable_list load_scene(camera& cam, const char* path, const char* mode) {
     hittable_list world;
 
     FILE* file = fopen(path, "r");
@@ -55,50 +156,21 @@ const hittable_list load_scene(const char* path, const char* mode) {
             break;
 
         if (strcmp(lineHeader, "MODEL") == 0) {
-            std::clog << "\rLoading Scene (Building Model)..." << std::flush;
-            char model_path[128];
-            char mat_str[3];
-            double r, g, b;
-            fscanf(file, "%s (%s", &model_path, &mat_str);
-            shared_ptr<material> mat;
-            if (strcmp(mat_str, "LAM") == 0) {
-                fscanf(file, "%lf %lf %lf)", &r, &g, &b);
-                mat = make_shared<lambertian>(color(r, g, b));
-            }
-            else if (strcmp(mat_str, "MET") == 0) {
-                double fuzz;
-                fscanf(file, "%lf %lf %lf %lf)", &r, &g, &b, &fuzz);
-                mat = make_shared<metal>(color(r, g, b), fuzz);
-            }
-            else if (strcmp(mat_str, "DIE") == 0) {
-                double index;
-                fscanf(file, "%lf)", &index);
-                mat = make_shared<dielectric>(index);
-            }
-            world.add(make_shared<model>(model_path, mat, mode));
+            world.add(parse_model(file, mode));
         } else if (strcmp(lineHeader, "SPHERE") == 0) {
-            std::clog << "\rLoading Scene (Building Sphere)..." << std::flush;
-            char mat_str[3];
-            double x, y, z;
-            double radius;
-            double r, g, b;
-            fscanf(file, "%lf %lf %lf %lf (%s", &x, &y, &z, &radius, &mat_str);
-            shared_ptr<material> mat;
-            if (strcmp(mat_str, "LAM") == 0) {
-                fscanf(file, "%lf %lf %lf)", &r, &g, &b);
-                mat = make_shared<lambertian>(color(r, g, b));
-            }
-            else if (strcmp(mat_str, "MET") == 0) {
-                double fuzz;
-                fscanf(file, "%lf %lf %lf %lf)", &r, &g, &b, &fuzz);
-                mat = make_shared<metal>(color(r, g, b), fuzz);
-            }
-            else if (strcmp(mat_str, "DIE") == 0) {
-                double index;
-                fscanf(file, "%lf)", &index);
-                mat = make_shared<dielectric>(index);
-            }
-            world.add(make_shared<sphere>(point(x, y, z), radius, mat));
+            world.add(parse_sphere(file));
+        } else if (strcmp(lineHeader, "QUAD") == 0) {
+            world.add(parse_quad(file));
+        } else if (strcmp(lineHeader, "IMAGE") == 0) {
+            parse_image_info(file, cam);
+        } else if (strcmp(lineHeader, "CAM") == 0) {
+            parse_camera_info(file, cam);
+        } else if (strcmp(lineHeader, "AA") == 0) {
+            parse_aa(file, cam);
+        } else if (strcmp(lineHeader, "DEPTH") == 0) {
+            parse_depth(file, cam);
+        } else if (strcmp(lineHeader, "BLUR") == 0) {
+            parse_blur(file, cam);
         }
     }
     fclose(file);

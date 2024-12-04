@@ -130,16 +130,18 @@ class camera {
                 }
             }
             image.close();
-            std::clog << "\rRendering Done!                                                   \n";
-            stats->save_csv();
-            stats->save_intersection_tests_image(width, height);
-            stats->save_traversal_step_image(width, height);
         }
 
         void print_loading(int progress) {
             std::clog << "\rCurrent Line: " << progress << '/' << height << ' ';
             int ratio = (double(progress) / height) * 20;
             std::clog << '[' << std::string(ratio, '#') << std::string(20-ratio, '-') << "] " << std::flush;
+        }
+
+        void save_stats() {
+            stats->save_csv();
+            stats->save_intersection_tests_image(width, height);
+            stats->save_traversal_step_image(width, height);
         }
 };
 
