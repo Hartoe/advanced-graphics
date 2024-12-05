@@ -8,11 +8,12 @@
 #include "model.h"
 
 #include <time.h>
+#include <stdlib.h>
 
-int main()
+int main(int argc, char* argv[])
 {
     // Get flags
-    settings stng = parse_args(__argc, __argv);
+    settings stng = parse_args(argc, argv);
     std::clog << "\rBuilding " << stng.infile << " with " << stng.model << " structure.\n" << std::flush;
 
     // Start clock counter
