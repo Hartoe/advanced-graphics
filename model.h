@@ -1,29 +1,61 @@
-#ifndef __MODEL_H__
-#define __MODEL_H__
-#include <vector>
-#include "geometry.h"
+#ifndef MODEL_H
+#define MODEL_H
 
-class Model {
-private:
-    std::vector<Vec3f> verts;
-    std::vector<Vec3i> faces;
-public:
-    Model(const char *filename);
+#include "mesh.h"
+#include "accelerate.h"
 
-    int nverts() const;                          // number of vertices
-    int nfaces() const;                          // number of triangles
+#include <cstring>
 
-    bool ray_triangle_intersect(const int &fi, const Vec3f &orig, const Vec3f &dir, float &tnear);
-    Vec3f triangle_normal(const int &fi);
+class model : public hittable {
+    public:
+        model(const char* path, shared_ptr<material> mat, const char* mode = "brute")
+        {
+            std::vector<vec3> vertices;
+            std::vector<vec3> face_indices;
+            loadOBJ(path, vertices, face_indices);
 
-    const Vec3f &point(int i) const;                   // coordinates of the vertex i
-    Vec3f &point(int i);                   // coordinates of the vertex i
-    int vert(int fi, int li) const;              // index of the vertex for the triangle fi and local index li
-    void get_bbox(Vec3f &min, Vec3f &max); // bounding box for all the vertices, including isolated ones
-    Vec3f &centroid(int i);
+            _mesh = mesh(vertices, face_indices, mat);
+            if (strcmp(mode, "bvh") == 0)
+                _mesh = hittable_list(make_shared<bvh_node>(_mesh));
+            else if (strcmp(mode, "kd") == 0)
+                _mesh = hittable_list(make_shared<kd_node>(_mesh));
+
+            std::clog << "\rModel: " << path << "           \n" << std::flush;
+        }
+
+        aabb bounding_box() const override { return _mesh.bounding_box(); }
+
+        bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
+            return _mesh.hit(r, ray_t, rec);
+        }
+    private:
+        hittable_list _mesh;
+
+        bool loadOBJ(const char* path, std::vector<vec3>& vertices, std::vector<vec3>& face_indices) {
+            FILE* file = fopen(path, "r");
+            if (file == NULL)
+                return false;
+
+            while (true) {
+                char lineHeader[128];
+                int res = fscanf(file, "%s", lineHeader);
+                if (res == EOF)
+                    break;
+
+                if (strcmp(lineHeader, "v") == 0) {
+                    double x, y, z;
+                    fscanf(file, "%lf %lf %lf\n", &x, &y, &z);
+                    vertices.push_back(vec3(x, y, z));
+                } else if (strcmp(lineHeader, "f") == 0) {
+                    unsigned int v1, v2, v3;
+                    fscanf(file, "%d %d %d\n", &v1, &v2, &v3);
+                    face_indices.push_back(vec3(v1-1, v2-1, v3-1));
+                }
+            }
+            fclose(file);
+
+            return true;
+        }
 };
 
-std::ostream& operator<<(std::ostream& out, Model &m);
-
-#endif //__MODEL_H__
-
+#endif
