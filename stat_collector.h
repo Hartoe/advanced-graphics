@@ -1,4 +1,5 @@
 #include "color.h"
+#include "common.h"
 #include <iostream>
 #include <ostream>
 #include <vector>
@@ -56,72 +57,42 @@ public:
         stream.close();
     }
 
-    int maximum_intersections(){
-        int max = 0;
-        for (int i: n_intersection_tests){
-            if (i > max) {
-                max = i;
-            }
-        }
-        return max;
-    }
-    int minimum_intersections(){
-        int min = 999999999;
-        for (int i: n_intersection_tests){
-            if (i < min) {
-                min = i;
-            }
-        }
-        return min;
-    }
 
-    void save_intersection_tests_image(int width, int height){
-        int min = minimum_intersections();
-        float range = maximum_intersections() - min;
-        std::ofstream image("intersections.ppm");
+    void plot_data(const std::vector<int> data, int width, int height, const color c, std::string name){
+        int min = min_value(data);
+        float range = max_value(data) - min;
+        std::ofstream image(name);
 
         image << "P3\n" << width << ' ' << height << "\n255\n";
+        int pixels = data.size() / samples_per_pixel;
 
-        for (int i = 0; i < n_intersection_tests.size(); i++){
-            int value = n_intersection_tests[i];
-            float x = ((value - min) * (1.0f / range));
-            color c(x, 0.0, 0.0);
-            write_color(image, c);
+        for (int i = 0; i < pixels; i++){
+
+            float data_point = 0;
+            for (int j = 0; j < samples_per_pixel; j++){
+                data_point += ((data[i*samples_per_pixel+j] - min) * (1.0f / range));
+            }
+            write_color(image, c * (data_point / samples_per_pixel));
         }
         image.close();
-    }
-    int maximum_traversals(){
-        int max = 0;
-        for (int i: n_traversal_steps){
-            if (i > max) {
-                max = i;
-            }
-        }
-        return max;
-    }
-    int minimum_traversals(){
-        int min = 999999999;
-        for (int i: n_traversal_steps){
-            if (i < min) {
-                min = i;
-            }
-        }
-        return min;
+
     }
 
     void save_traversal_step_image(int width, int height){
-        int min = minimum_traversals();
-        float range = maximum_traversals() - min;
-        std::ofstream image("traversals.ppm");
+        plot_data(
+            n_traversal_steps, 
+            width, height, 
+            color(1.0,1.0,1.0), 
+            "traversals.ppm"
+        );
+    }
 
-        image << "P3\n" << width << ' ' << height << "\n255\n";
-
-        for (int i = 0; i < n_traversal_steps.size(); i++){
-            int value = n_traversal_steps[i];
-            float x = ((value - min) * (1.0f / range));
-            color c(x, x, x);
-            write_color(image, c);
-        }
-        image.close();
+    void save_intersection_tests_image(int width, int height){
+        plot_data(
+            n_intersection_tests, 
+            width, height, 
+            color(1.0,0.0,0.0), 
+            "intersections.ppm"
+        );
     }
 };
