@@ -110,6 +110,7 @@ class kd_node : public node {
 
         kd_node(std::vector<shared_ptr<hittable>>& objects, size_t start, size_t end, int depth, const aabb& bounds) {
             bbox = bounds;
+            // std::cout << "node" << std::endl;
 
             int axis = axis_heuristic(); // Get split axis acording to heuristic
 
@@ -164,7 +165,7 @@ class kd_node : public node {
         aabb bounding_box() const override { return bbox; }
     private:
         static const int min_primitive_count = 2;
-        static const int max_depth = 30;
+        static const int max_depth = 1;
         int depth;
         shared_ptr<hittable> left;
         shared_ptr<hittable> right;
