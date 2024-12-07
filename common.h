@@ -8,6 +8,7 @@
 #include <random>
 #include <algorithm>
 #include <fstream>
+#include <vector>
 
 using std::make_shared;
 using std::shared_ptr;
@@ -31,6 +32,26 @@ inline double random_double(double min, double max) {
 
 inline int random_int(int min, int max) {
     return int(random_double(min, max+1));
+}
+
+inline int min_value(const std::vector<int> v) {
+        int min = 999999999;
+        for (int i: v){
+            if (i < min) {
+                min = i;
+            }
+        }
+        return min;
+}
+
+inline int max_value(const std::vector<int> v) {
+        int max = -999999999;
+        for (int i: v){
+            if (i > max) {
+                max = i;
+            }
+        }
+        return max;
 }
 
 #include "geometry.h"
