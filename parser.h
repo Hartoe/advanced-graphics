@@ -1,8 +1,8 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "camera.h"
 #include "common.h"
+#include "camera.h"
 #include "material.h"
 #include "model.h"
 #include "primitive.h"
@@ -21,9 +21,10 @@ const settings parse_args(int argc, char* argv[]) {
         const char* opt = argv[i];
         
         // Check if flag, otherwise skip
-        if (opt[0] == '-'){
-            if ((i+1) < argc) {
-                const char* param = argv[i+1];
+        auto flag = std::string(opt).substr(0, 2);
+        if (opt[0] == '-') {
+            if ((i + 1) < argc) {
+                const char* param = argv[i + 1];
 
                 if (strcmp(opt, "-m") == 0 || strcmp(opt, "--model") == 0) {
                     stng.model = param;

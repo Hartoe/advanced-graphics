@@ -33,13 +33,15 @@ int main(int argc, char* argv[])
     std::clog << "Starting Render to " << stng.outfile << std::endl;
     cam.render(world, stng.outfile.c_str());
     auto clkRender = clock();
-    std::clog << "\rRendering Done in " << double(clkRender - clkBuild) / CLOCKS_PER_SEC << "s !                    " << std::endl;
+    std::clog << "\rRendering Done in " << double(clkRender - clkBuild) / CLOCKS_PER_SEC << "s !                        " << std::endl;
 
     // Save traversal statistics
+    std::clog << "Starting Stat Collection." << std::endl;
     cam.save_stats();
-
-    // End clock counter
     auto clkFinish = clock();
+    std::clog << "\rStat Collection Done in " << double(clkFinish - clkRender) / CLOCKS_PER_SEC << "s !                         " << std::endl;
+
+    // End clock counter    
     std::clog << "Total Clock Time: " << double(clkFinish - clkStart) / CLOCKS_PER_SEC << "s" << std::endl;
 
     return 0;

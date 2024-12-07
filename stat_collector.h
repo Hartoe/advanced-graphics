@@ -45,7 +45,7 @@ public:
         std::cout << i << ' ';
     }
     void save_csv(){
-        std::cout << "\n" << samples_per_pixel << std::endl;
+        std::clog << "\rCollecting Stats (Saving to CSV)...             " << std::flush;
         std::ofstream stream("stats.csv");
         stream << "pixel index,sample index,number of traversal steps,number of intersection tests,\n";
         for (int i = 0; i < n_intersection_tests.size(); i++){
@@ -79,20 +79,22 @@ public:
     }
 
     void save_traversal_step_image(int width, int height){
+        std::clog << "\rCollecting Stats (Traversals)...                " << std::flush;
         plot_data(
             n_traversal_steps, 
             width, height, 
             color(1.0,1.0,1.0), 
-            "traversals.ppm"
+            "output/stats/traversals.ppm"
         );
     }
 
     void save_intersection_tests_image(int width, int height){
+        std::clog << "\rCollecting Stats (Intersections)...                 " << std::flush;
         plot_data(
             n_intersection_tests, 
             width, height, 
             color(1.0,0.0,0.0), 
-            "intersections.ppm"
+            "output/stats/intersections.ppm"
         );
-    }
-};
+        }
+    };
