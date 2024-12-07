@@ -139,6 +139,7 @@ class camera {
         }
 
         void save_stats() {
+            std::clog << "\rCollecting Stats...                             " << std::flush;
             stats->save_csv();
             stats->save_intersection_tests_image(width, height);
             stats->save_traversal_step_image(width, height);

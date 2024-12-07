@@ -2,7 +2,6 @@
 build/
 .cache/
 .vscode/
-main
 main.exe
 traversals.ppm
 intersections.ppm

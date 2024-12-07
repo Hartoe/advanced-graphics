@@ -1,8 +1,8 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "camera.h"
 #include "common.h"
+#include "camera.h"
 #include "material.h"
 #include "model.h"
 #include "primitive.h"
@@ -36,8 +36,6 @@ const settings parse_args(int argc, char* argv[]) {
             }
         }
     }
-
-    std::cout << "\rLoading Scene...               " << std::flush;
 
     return stng;
 }
@@ -117,7 +115,6 @@ const shared_ptr<material> parse_material(FILE* file) {
 const shared_ptr<model> parse_model(FILE* file, const char* mode) {
     std::cout << "\rLoading Scene (Building Model)...           " << std::flush;
     char model_path[128];
-    std::cout << file << std::flush;
     fscanf(file, "%s ", model_path);
     shared_ptr<material> mat = parse_material(file);
     return make_shared<model>(model_path, mat, mode);
