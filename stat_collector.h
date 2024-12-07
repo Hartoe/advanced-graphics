@@ -45,8 +45,8 @@ public:
         std::cout << i << ' ';
     }
     void save_csv(std::string name){
-        std::clog << "\rCollecting Stats (Saving to CSV)...             " << std::flush;
-        std::ofstream stream(("output/" + name + "/stats.csv"));
+        std::clog << "\rSaving to CSV...                         " << std::flush;
+        std::ofstream stream(("output/stats/" + name + "_stats.csv"));
         stream << "pixel index,sample index,number of traversal steps,number of intersection tests,\n";
         for (int i = 0; i < n_intersection_tests.size(); i++){
             stream << pixel_indeces[i] << ",";
@@ -55,6 +55,7 @@ public:
             stream << n_intersection_tests[i] << ",\n";
         }
         stream.close();
+        std::clog << "\rSaved to CSV!                       " << std::endl;
     }
 
 
@@ -67,7 +68,7 @@ public:
         int pixels = data.size() / samples_per_pixel;
 
         for (int i = 0; i < pixels; i++){
-            std::clog << "\rCurrent Line: " << i << '/' << pixels << ' ';
+            std::clog << "\rProgress: " << std::flush;
             int ratio = (double(i) / pixels) * 20;
             std::clog << '[' << std::string(ratio, '#') << std::string(20-ratio, '-') << "] " << std::flush;
             float data_point = 0;
@@ -81,23 +82,25 @@ public:
     }
 
     void save_traversal_step_image(std::string name, int width, int height){
-        std::clog << "\rCollecting Stats (Traversals)...                " << std::flush;
+        std::clog << "\rCollecting Traversals...                     " << std::flush;
         plot_data(
             n_traversal_steps, 
             width, height, 
             color(1.0,1.0,1.0), 
-            "output/" + name + "/traversals.ppm"
+            "output/stats/" + name + "_traversals.ppm"
         );
+        std::clog << "\rTraversals Saved!                                " << std::endl;
     }
 
     void save_intersection_tests_image(std::string name, int width, int height){
-        std::clog << "\rCollecting Stats (Intersections)...                 " << std::flush;
+        std::clog << "\rCollecting Intersections...                  " << std::flush;
         plot_data(
             n_intersection_tests, 
             width, height, 
             color(1.0,0.0,0.0), 
-            "output/" + name + "/intersections.ppm"
+            "output/stats/" + name + "_intersections.ppm"
         );
+        std::clog << "\rIntersections Saved!                                " << std::endl;
     }
 
     std::string get_file_name(std::string path) {
