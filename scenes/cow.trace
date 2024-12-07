@@ -4,3 +4,4 @@ AA 50
 DEPTH 50
 BLUR 0.0
 MODEL models/cow.obj (LAM 0.7 0.2 0.2)
+SPHERE (0.0 -1000.0 0.0) 999 (MET 0.5 0.5 0.5 0.2)

@@ -1,0 +1,7 @@
+IMAGE 400 1.0/1.0
+CAM (5.0 0.0 0.1) (5.0 0.0 0.0) (0 1 0) 90.0
+AA 50
+DEPTH 50
+BLUR 0.0
+MODEL models/duck.obj (LAM 0.7 0.2 0.2)
+SPHERE (0.0 -1000.0 0.0) 996 (MET 0.5 0.5 0.5 0.2)
