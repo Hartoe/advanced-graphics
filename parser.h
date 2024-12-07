@@ -92,19 +92,19 @@ const void parse_blur(FILE* file, camera& cam) {
 }
 
 const shared_ptr<material> parse_material(FILE* file) {
-    char mat_str[3];
-    fscanf(file, "(%s ", mat_str);
+    char c1, c2, c3;
+    fscanf(file, "(%c%c%c", &c1, &c2, &c3);
     double r, g, b;
-    if (strcmp(mat_str, "LAM") == 0) {
+    if (c1 == 'L') {
         fscanf(file, "%lf %lf %lf)", &r, &g, &b);
         return make_shared<lambertian>(color(r, g, b));
     }
-    else if (strcmp(mat_str, "MET") == 0) {
+    else if (c1 == 'M') {
         double fuzz;
         fscanf(file, "%lf %lf %lf %lf)", &r, &g, &b, &fuzz);
         return make_shared<metal>(color(r, g, b), fuzz);
     }
-    else if (strcmp(mat_str, "DIE") == 0) {
+    else if (c1 == 'D') {
         double index;
         fscanf(file, "%lf)", &index);
         return make_shared<dielectric>(index);
