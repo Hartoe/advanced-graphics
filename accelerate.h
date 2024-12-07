@@ -138,8 +138,7 @@ class kd_node : public node {
                 left_bbox = aabb(bbox.x, bbox.y, interval(bbox.z.min, bbox.z.min + half));
                 right_bbox = aabb(bbox.x, bbox.y, interval(bbox.z.min + half, bbox.z.max));
             }
-            // std::cout << "midway: " << midway << ", left: " << left_point.size() << ", right: " << right_point.size() << std::endl;
-
+            
             left = make_shared<kd_node>(left_point, depth+1, left_bbox);
             right = make_shared<kd_node>(right_point, depth+1, right_bbox);
         }

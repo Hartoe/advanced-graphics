@@ -3,6 +3,4 @@ build/
 .cache/
 .vscode/
 main.exe
-traversals.ppm
-intersections.ppm
-stats.csv
+output/

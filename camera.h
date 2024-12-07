@@ -17,11 +17,13 @@ class camera {
         vec3 defocus_disk_u;
         vec3 defocus_disk_v;
 
-        void initialize() {
+        void initialize() {           
             height = int(width / aspect_ratio);
             height = (height < 1) ? 1 : height;
 
             pixel_sample_scale = 1.0 / samples_per_pixel;
+            stats = std::make_shared<stat_collector>(stat_collector(samples_per_pixel));
+            stats->samples_per_pixel = samples_per_pixel;
 
             center = lookfrom;
 
@@ -100,10 +102,6 @@ class camera {
         double focus_dist = 10;
         std::shared_ptr<stat_collector> stats;
 
-        camera(){
-            stats = std::make_shared<stat_collector>(stat_collector(samples_per_pixel));
-        }
-
         void render(const hittable& world, const char* path = "image.ppm") {
             initialize();
 
@@ -138,11 +136,12 @@ class camera {
             std::clog << '[' << std::string(ratio, '#') << std::string(20-ratio, '-') << "] " << std::flush;
         }
 
-        void save_stats() {
+        void save_stats(std::string path) {
             std::clog << "\rCollecting Stats...                             " << std::flush;
-            stats->save_csv();
-            stats->save_intersection_tests_image(width, height);
-            stats->save_traversal_step_image(width, height);
+            auto file_name = stats->get_file_name(path);
+            stats->save_csv(file_name);
+            stats->save_intersection_tests_image(file_name, width, height);
+            stats->save_traversal_step_image(file_name, width, height);
         }
 };
 

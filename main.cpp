@@ -25,7 +25,6 @@ int main(int argc, char* argv[])
     // Read in .trace file
     std::clog << "Loading Scene..." << std::flush;
     hittable_list world = load_scene(cam, stng.infile.c_str(), stng.model.c_str());
-    cam.stats->samples_per_pixel = 1;
     auto clkBuild = clock();
     std::clog <<"\rBuilding Done in "<< double(clkBuild - clkStart) / CLOCKS_PER_SEC << "s !                " << std::endl;
 
@@ -37,7 +36,7 @@ int main(int argc, char* argv[])
 
     // Save traversal statistics
     std::clog << "Starting Stat Collection." << std::endl;
-    cam.save_stats();
+    cam.save_stats(stng.outfile);
     auto clkFinish = clock();
     std::clog << "\rStat Collection Done in " << double(clkFinish - clkRender) / CLOCKS_PER_SEC << "s !                         " << std::endl;
 
