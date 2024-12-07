@@ -36,6 +36,13 @@ class node : public hittable {
             return box_compare(a, b, 2);
         }
 
+        // returns longest axis (always split on longest axis)
+        static int axis_heuristic(const aabb& box) {
+            if (box.x.size() >= box.y.size() && box.x.size() >= box.z.size()) return 0;
+            if (box.y.size() >= box.z.size()) return 1;
+            return 2;
+        }
+
         bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
             rec.stats->record_traversal_step();
             if (!bbox.hit(r, ray_t))
@@ -111,7 +118,7 @@ class kd_node : public node {
         kd_node(std::vector<shared_ptr<hittable>>& objects, size_t start, size_t end, int depth, const aabb& bounds) {
             bbox = bounds;
 
-            int axis = axis_heuristic(); // Get split axis acording to heuristic
+            int axis = axis_heuristic(bbox); // Get split axis acording to heuristic
 
             auto comparator = (axis == 0) ? box_x_compare
                             : (axis == 1) ? box_y_compare
@@ -155,6 +162,7 @@ class kd_node : public node {
             if (!bbox.hit(r, ray_t))
                 return false;
 
+            // Determine if ray hits child nodes
             bool hit_left = left->hit(r, ray_t, rec);
             bool hit_right = right->hit(r, interval(ray_t.min, hit_left ? rec.t : ray_t.max), rec);
 
@@ -163,45 +171,38 @@ class kd_node : public node {
 
         aabb bounding_box() const override { return bbox; }
     private:
-        static const int min_primitive_count = 2;
-        static const int max_depth = 30;
+        static const int min_primitive_count = 20;
+        static const int max_depth = 10;
         int depth;
         shared_ptr<hittable> left;
         shared_ptr<hittable> right;
         aabb bbox;
-        
-        // returns longest axis (always split on longest axis)
-        int axis_heuristic() {
-            if (bbox.x.size() > bbox.y.size() && bbox.x.size() > bbox.z.size()) return 0;
-            if (bbox.y.size() > bbox.z.size()) return 1;
-            return 2;
-        }
 
         size_t get_left_point(const std::vector<shared_ptr<hittable>>& objects, size_t start, size_t end, int axis, double midway) {
-            // find first element that is bigger than midway turn
+            // find first element whose min is bigger than midway turn
             auto elem = std::find_if(std::begin(objects) + start, std::begin(objects) + end, [axis, midway](const shared_ptr<hittable>& obj){
                 auto obj_axis = obj->bounding_box().axis_interval(axis);
                 return obj_axis.min > midway;
             });
             auto index = elem-objects.begin();
-            if (index >= objects.size() || index < 0)
-                return end;
-
             return index;
         }
 
         size_t get_right_point(const std::vector<shared_ptr<hittable>>& objects, size_t start, size_t end, int axis, double midway) {
-            // find first element that is bigger than midway turn
+            // find first element whose max is bigger than midway turn
             auto elem = std::find_if(std::begin(objects) + start, std::begin(objects) + end, [axis, midway](const shared_ptr<hittable>& obj){
                 auto obj_axis = obj->bounding_box().axis_interval(axis);
                 return obj_axis.max >= midway;
             });
             auto index = elem-objects.begin();
-            if (index >= objects.size() || index < 0)
-                return end;
-
             return index;
         }
+};
+
+//* BIH
+class bih_node : public node {
+    public:
+    private:
 };
 
 #endif

@@ -20,7 +20,7 @@ class model : public hittable {
             else if (strcmp(mode, "kd") == 0)
                 _mesh = hittable_list(make_shared<kd_node>(_mesh));
 
-            std::clog << "\rModel: " << path << "           \n" << std::flush;
+            std::clog << "\rModel: " << path << "           " << std::endl;
         }
 
         aabb bounding_box() const override { return _mesh.bounding_box(); }

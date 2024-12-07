@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
 {
     // Get flags
     settings stng = parse_args(argc, argv);
-    std::clog << "\rBuilding " << stng.infile << " with " << stng.model << " structure.\n" << std::flush;
+    std::clog << "Building " << stng.infile << " with " << stng.model << " structure." << std::endl;
 
     // Start clock counter
     auto clkStart = clock();
@@ -23,24 +23,24 @@ int main(int argc, char* argv[])
     camera cam;
 
     // Read in .trace file
-    std::clog << "\rLoading Scene..." << std::flush;
+    std::clog << "Loading Scene..." << std::flush;
     hittable_list world = load_scene(cam, stng.infile.c_str(), stng.model.c_str());
     cam.stats->samples_per_pixel = 1;
     auto clkBuild = clock();
-    std::clog <<"\rBuilding Done in "<< double(clkBuild - clkStart) / CLOCKS_PER_SEC << "s !                \n" << std::flush;
+    std::clog <<"\rBuilding Done in "<< double(clkBuild - clkStart) / CLOCKS_PER_SEC << "s !                " << std::endl;
 
     // Run Renderer
-    std::clog << "\rStarting Render to " << stng.outfile << "\n"  << std::flush;
+    std::clog << "Starting Render to " << stng.outfile << std::endl;
     cam.render(world, stng.outfile.c_str());
     auto clkRender = clock();
-    std::clog << "\rRendering Done in " << double(clkRender - clkBuild) / CLOCKS_PER_SEC << "s !                    \n" << std::flush;
+    std::clog << "\rRendering Done in " << double(clkRender - clkBuild) / CLOCKS_PER_SEC << "s !                    " << std::endl;
 
     // Save traversal statistics
     cam.save_stats();
 
     // End clock counter
     auto clkFinish = clock();
-    std::clog << "Total Clock Time: " << double(clkFinish - clkStart) / CLOCKS_PER_SEC << "s" << std::endl << std::flush;
+    std::clog << "Total Clock Time: " << double(clkFinish - clkStart) / CLOCKS_PER_SEC << "s" << std::endl;
 
     return 0;
 }

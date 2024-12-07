@@ -26,34 +26,34 @@ const settings parse_args(int argc, char* argv[]) {
             if ((i + 1) < argc) {
                 const char* param = argv[i + 1];
 
-                if (strcmp(flag.c_str(), "-m") == 0) {
+                if (strcmp(opt, "-m") == 0 || strcmp(opt, "--model") == 0) {
                     stng.model = param;
-                } else if (strcmp(flag.c_str(), "-i") == 0) {
+                } else if (strcmp(opt, "-i") == 0 || strcmp(opt, "--input") == 0) {
                     stng.infile = param;
-                } else if (strcmp(flag.c_str(), "-o") == 0) {
+                } else if (strcmp(opt, "-o") == 0 || strcmp(opt, "--output") == 0) {
                     stng.outfile = param;
                 }
             }
         }
     }
 
-    std::cout << "Loading Scene (Image Info)...               " << std::endl;
+    std::cout << "\rLoading Scene...               " << std::flush;
 
     return stng;
 }
 
 const void parse_image_info(FILE* file, camera& cam) {
-    std::cout << "Loading Scene (Image Info)...               " << std::endl;
+    std::cout << "\rLoading Scene (Image Info)...               " << std::flush;
     int width;
     double aspect_w, aspect_h;
     fscanf(file, "%i %lf/%lf", &width, &aspect_w, &aspect_h);
     cam.width = width;
     cam.aspect_ratio = aspect_w / aspect_h;
-    std::cout << "Image: " << width << " width, " << aspect_w << '/' << aspect_h << "             " << std::endl;
+    std::clog << "\rImage: " << width << " width, " << aspect_w << '/' << aspect_h << "             " << std::endl;
 }
 
 const void parse_camera_info(FILE* file, camera& cam) {
-    std::cout << "Loading Scene (Camera Info)...              " << std::endl;
+    std::cout << "\rLoading Scene (Camera Info)...              " << std::flush;
     double lfx, lfy, lfz;
     double lax, lay, laz;
     int upx, upy, upz;
@@ -63,35 +63,37 @@ const void parse_camera_info(FILE* file, camera& cam) {
     cam.lookat = point(lax, lay, laz);
     cam.vup = vec3(upx, upy, upz);
     cam.vfov = fov;
-    std::cout << "Camera: (" << lfx << ' ' << lfy << ' ' << lfz << ") (" << lax << ' ' << lay << ' ' << laz << ") (" << upx << ' ' << upy << ' ' << upz << ") " << fov << std::endl;
+    std::clog << "\rCamera: (" << lfx << ' ' << lfy << ' ' << lfz << ") ("
+        << lax << ' ' << lay << ' ' << laz << ") (" << upx << ' ' << upy
+        << ' ' << upz << ") " << fov << std::endl;
 }
 
 const void parse_aa(FILE* file, camera& cam) {
-    std::cout << "Loading Scene (Anti-Aliasing)...            " << std::endl;
+    std::cout << "\rLoading Scene (Anti-Aliasing)...            " << std::flush;
     int samples;
     fscanf(file, "%i", &samples);
     cam.samples_per_pixel = samples;
-    std::cout << "Anti-Aliasing: " << samples << " samples per pixel         " << std::endl;
+    std::clog << "\rAnti-Aliasing: " << samples << " samples per pixel         " << std::endl;
 }
 
 const void parse_depth(FILE* file, camera& cam) {
-    std::cout << "Loading Scene (Shadow Depth)...             " << std::endl;
+    std::cout << "\rLoading Scene (Shadow Depth)...             " << std::flush;
     int depth;
     fscanf(file, "%i", &depth);
     cam.max_depth = depth;
-    std::cout << "Max Bounce Depth: " << depth << "               " << std::endl;
+    std::clog << "\rMax Bounce Depth: " << depth << "               " << std::endl;
 }
 
 const void parse_blur(FILE* file, camera& cam) {
-    std::cout << "Loading Scene (Defocus Blur)...             " << std::endl;
+    std::cout << "\rLoading Scene (Defocus Blur)...             " << std::flush;
     double blur;
     fscanf(file, "%lf", &blur);
     cam.defocus_angle = blur;
-    std::cout << "Defocus Angle: " << blur << "                   " << std::endl;
+    std::clog << "\rDefocus Angle: " << blur << "                   " << std::endl;
 }
 
 const shared_ptr<material> parse_material(FILE* file) {
-    std::cout << "\rParsing Material...             " << std::endl;
+    std::cout << "\rParsing Material...             " << std::flush;
     char c1, c2, c3;
     fscanf(file, "(%c%c%c", &c1, &c2, &c3);
 
@@ -113,7 +115,7 @@ const shared_ptr<material> parse_material(FILE* file) {
 }
 
 const shared_ptr<model> parse_model(FILE* file, const char* mode) {
-    std::cout << "Loading Scene (Building Model)...           " << std::endl;
+    std::cout << "\rLoading Scene (Building Model)...           " << std::flush;
     char model_path[128];
     std::cout << file << std::flush;
     fscanf(file, "%s ", model_path);
@@ -122,7 +124,7 @@ const shared_ptr<model> parse_model(FILE* file, const char* mode) {
 }
 
 const shared_ptr<sphere> parse_sphere(FILE* file) {
-    std::cout << "Loading Scene (Building Sphere)...          " << std::endl;
+    std::cout << "\rLoading Scene (Building Sphere)...          " << std::flush;
     double x, y, z;
     double radius;
     fscanf(file, " (%lf %lf %lf) %lf ", &x, &y, &z, &radius);
@@ -131,7 +133,7 @@ const shared_ptr<sphere> parse_sphere(FILE* file) {
 }
 
 const shared_ptr<quad> parse_quad(FILE* file) {
-    std::cout << "Loading Scene (Building Quad)...            " << std::endl;
+    std::cout << "\rLoading Scene (Building Quad)...            " << std::flush;
     double qx, qy, qz;
     double ux, uy, uz;
     double vx, vy, vz;

@@ -1,0 +1,6 @@
+IMAGE 400 1.0/1.0
+CAM (0.0 0.0 7.0) (0.0 0.0 0.0) (0 1 0) 90.0
+AA 1
+DEPTH 100
+BLUR 0.0
+MODEL models/cow.obj (LAM 0.7 0.2 0.2)
