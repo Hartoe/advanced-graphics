@@ -1,11 +1,11 @@
 #ifndef PARSER_H
 #define PARSER_H
 
+#include "camera.h"
 #include "common.h"
 #include "material.h"
 #include "model.h"
 #include "primitive.h"
-#include "camera.h"
 
 #include <cstring>
 
@@ -21,16 +21,15 @@ const settings parse_args(int argc, char* argv[]) {
         const char* opt = argv[i];
         
         // Check if flag, otherwise skip
-        auto flag = std::string(opt).substr(0, 2);
         if (opt[0] == '-'){
             if ((i+1) < argc) {
                 const char* param = argv[i+1];
 
-                if (strcmp(flag.c_str(), "-m") == 0) {
+                if (strcmp(opt, "-m") == 0 || strcmp(opt, "--model") == 0) {
                     stng.model = param;
-                } else if (strcmp(flag.c_str(), "-i") == 0) {
+                } else if (strcmp(opt, "-i") == 0 || strcmp(opt, "--input") == 0) {
                     stng.infile = param;
-                } else if (strcmp(flag.c_str(), "-o") == 0) {
+                } else if (strcmp(opt, "-o") == 0 || strcmp(opt, "--output") == 0) {
                     stng.outfile = param;
                 }
             }
@@ -47,7 +46,7 @@ const void parse_image_info(FILE* file, camera& cam) {
     fscanf(file, "%i %lf/%lf", &width, &aspect_w, &aspect_h);
     cam.width = width;
     cam.aspect_ratio = aspect_w / aspect_h;
-    std::clog << "\rImage: " << width << " width, " << aspect_w << '/' << aspect_h << "             \n" << std::flush;
+    std::clog << "\rImage: " << width << " width, " << aspect_w << '/' << aspect_h << "             " << std::endl;
 }
 
 const void parse_camera_info(FILE* file, camera& cam) {
@@ -65,7 +64,7 @@ const void parse_camera_info(FILE* file, camera& cam) {
     cam.vfov = fov;
     std::clog << "\rCamera: (" << lfx << ' ' << lfy << ' ' << lfz << ") ("
         << lax << ' ' << lay << ' ' << laz << ") (" << upx << ' ' << upy
-        << ' ' << upz << ") " << fov << '\n' << std::flush;
+        << ' ' << upz << ") " << fov << std::endl;
 }
 
 const void parse_aa(FILE* file, camera& cam) {
@@ -73,7 +72,7 @@ const void parse_aa(FILE* file, camera& cam) {
     int samples;
     fscanf(file, "%i", &samples);
     cam.samples_per_pixel = samples;
-    std::clog << "\rAnti-Aliasing: " << samples << " samples per pixel         \n" << std::flush;
+    std::clog << "\rAnti-Aliasing: " << samples << " samples per pixel         " << std::endl;
 }
 
 const void parse_depth(FILE* file, camera& cam) {
@@ -81,7 +80,7 @@ const void parse_depth(FILE* file, camera& cam) {
     int depth;
     fscanf(file, "%i", &depth);
     cam.max_depth = depth;
-    std::clog << "\rMax Bounce Depth: " << depth << "               \n" << std::flush;
+    std::clog << "\rMax Bounce Depth: " << depth << "               " << std::endl;
 }
 
 const void parse_blur(FILE* file, camera& cam) {
@@ -89,7 +88,7 @@ const void parse_blur(FILE* file, camera& cam) {
     double blur;
     fscanf(file, "%lf", &blur);
     cam.defocus_angle = blur;
-    std::clog << "\rDefocus Angle: " << blur << "                   \n" << std::flush;
+    std::clog << "\rDefocus Angle: " << blur << "                   " << std::endl;
 }
 
 const shared_ptr<material> parse_material(FILE* file) {
