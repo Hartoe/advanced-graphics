@@ -256,6 +256,11 @@ class aabb {
             }
             return true;
         }
+
+        const point centroid() const {
+            return point(x.min + (0.5*x.size()), y.min + (0.5*y.size()), z.min + (0.5*z.size()));
+        }
+
     private:
         void pad_to_minimums() {
             double delta = 0.0001;

@@ -19,6 +19,8 @@ class model : public hittable {
                 _mesh = hittable_list(make_shared<bvh_node>(_mesh));
             else if (strcmp(mode, "kd") == 0)
                 _mesh = hittable_list(make_shared<kd_node>(_mesh));
+            else if (strcmp(mode, "bih") == 0)
+                _mesh = hittable_list(make_shared<bih_node>(_mesh));
 
             std::clog << "\rModel: " << path << "           " << std::endl;
         }
