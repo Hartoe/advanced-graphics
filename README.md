@@ -10,3 +10,6 @@ Source code based on [Ray Tracing in One Weekend](https://raytracing.github.io/b
 ```
   ```model-name``` consists of either 'brute', 'bvh', 'kd', or 'bih'
                    Each abreviation stands for their own acceleration structure (except for brute, which is the absence of a structure).
+
+**Warning!**
+In case the program doesn't provide an output file or the accompanying traversal and intersection files, first create the directory ./output/ with a sub-directory ./output/stats/ 
