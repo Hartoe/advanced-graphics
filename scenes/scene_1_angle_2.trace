@@ -1,0 +1,6 @@
+IMAGE 400 1.0/1.0
+CAM (-0.15 0.14 0.0) (0.10 0.10 0.0) (0 1 0) 90.0
+AA 1
+DEPTH 50
+BLUR 0.0
+MODEL models/bunny.obj (LAM 0.7 0.2 0.2)
