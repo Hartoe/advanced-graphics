@@ -107,6 +107,7 @@ class sphere : public hittable {
             }
 
         bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
+            rec.stats->record_intersection_test();
             vec3 oc = center - r.origin();
             auto a = r.direction().length_squared();
             auto h = dot(r.direction(), oc);

@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "camera.h"
+#include "hittable.h"
 #include "material.h"
 #include "model.h"
 #include "primitive.h"
@@ -114,7 +115,7 @@ const shared_ptr<material> parse_material(FILE* file) {
     throw std::invalid_argument("Could not parse Material!");
 }
 
-const shared_ptr<model> parse_model(FILE* file, const char* mode) {
+const shared_ptr<model> parse_model(FILE* file, const char* mode = "brute") {
     std::clog << "\rLoading Scene (Building Model)...           " << std::flush;
     char model_path[128];
     fscanf(file, "%s ", model_path);
@@ -174,6 +175,15 @@ const hittable_list load_scene(camera& cam, const char* path, const char* mode) 
         }
     }
     fclose(file);
+    std::clog << "size:" << std::endl;
+    std::clog << world.objects.size() << std::endl;
+
+    if (strcmp(mode, "bvh") == 0)
+        world = hittable_list(make_shared<bvh_node>(world));
+    else if (strcmp(mode, "kd") == 0)
+        world = hittable_list(make_shared<kd_node>(world));
+    else if (strcmp(mode, "bih") == 0)
+        world = hittable_list(make_shared<bih_node>(world));
 
     return world;
 }
