@@ -7,9 +7,13 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "${file}",
+                "-I${workspaceFolder}\\include",
+                "-L${workspaceFolder}\\lib",
+                "${fileDirname}\\*.cpp",
+                "${fileDirname}\\glad.c",
+                "-lglfw3dll",
                 "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe"
+                "${workspaceFolder}\\ray-tracer.exe"
             ],
             "options": {
                 "cwd": "${fileDirname}"
