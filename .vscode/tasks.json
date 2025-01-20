@@ -7,11 +7,10 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "-I${workspaceFolder}\\include",
-                "-L${workspaceFolder}\\lib",
+                "-I${OPENCL_INC}",
+                "-L${OPENCL_LIB64}",
                 "${fileDirname}\\*.cpp",
-                "${fileDirname}\\glad.c",
-                "-lglfw3dll",
+                "-lOpenCL",
                 "-o",
                 "${workspaceFolder}\\ray-tracer.exe"
             ],
