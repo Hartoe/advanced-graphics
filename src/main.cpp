@@ -26,7 +26,24 @@ int main(int argc, char* argv[])
     char Name[numNames];
     status = clGetPlatformInfo(platforms[0], CL_PLATFORM_NAME, sizeof(Name), Name, NULL);
 
+    cl_uint numDevices;
+    status = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, 0, NULL, &numDevices);
+    cl_device_id *devices = NULL;
+    devices = (cl_device_id*) malloc(numDevices*sizeof(cl_device_id));
+    status = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, numDevices, devices, NULL);
+
+    status = clGetDeviceInfo(devices[0], CL_DEVICE_NAME, 0, NULL, &numNames);
+    char deviceName[numNames];
+    status = clGetDeviceInfo(devices[0], CL_DEVICE_NAME, sizeof(deviceName), deviceName, NULL);
+
+    cl_int error = 0;
+    cl_context context = clCreateContext(NULL, numDevices, devices, NULL, NULL, &error);
+    if (error != 0)
+        printf("ERROR! %i\n", error);
+
     printf("Name of platform: %s\n", Name);
+    printf("Name of device: %s\n", deviceName);
+
     return 0;
 
     // Get flags
