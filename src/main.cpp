@@ -9,7 +9,11 @@
 
 #include <time.h>
 #include <stdlib.h>
-#include <CL/cl.h>
+#ifdef __APPLE__
+    #include <OpenCL/cl.h>
+#elif defined _WIN32 || defined _WIN64
+    #include <CL/cl.h>
+#endif
 
 int main(int argc, char* argv[])
 {
