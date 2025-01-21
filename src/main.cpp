@@ -13,7 +13,7 @@
 
 int main(int argc, char* argv[])
 {
-    cl_int status;
+    cl_int status = CL_SUCCESS;
     cl_uint numPlatforms = 0;
     cl_platform_id *platforms = NULL;
     size_t numNames = 0;
@@ -36,14 +36,76 @@ int main(int argc, char* argv[])
     char deviceName[numNames];
     status = clGetDeviceInfo(devices[0], CL_DEVICE_NAME, sizeof(deviceName), deviceName, NULL);
 
-    cl_int error = 0;
-    cl_context context = clCreateContext(NULL, numDevices, devices, NULL, NULL, &error);
-    if (error != 0)
-        printf("ERROR! %i\n", error);
-
     printf("Name of platform: %s\n", Name);
     printf("Name of device: %s\n", deviceName);
 
+    cl_context context = clCreateContext(NULL, numDevices, devices, NULL, NULL, &status);
+    if (status != CL_SUCCESS)
+        std::cout << "CONTEXT: " << status << std::endl;
+
+    cl_command_queue queue = clCreateCommandQueue(context, devices[0], 0, &status);
+    if (status != CL_SUCCESS)
+        std::cout << "QUEUE: " << status << std::endl;
+
+    int size = 10;
+    int A_h[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    int B_h[] = { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 };
+    int C_h[size];
+
+    cl_mem A_d = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(int) * size, NULL, &status);
+    cl_mem B_d = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(int) * size, NULL, &status);
+    cl_mem C_d = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(int) * size, NULL, &status);
+    if (status != CL_SUCCESS)
+        std::cout << "BUFFER: " << status << std::endl;
+
+    status = clEnqueueWriteBuffer(queue, A_d, CL_TRUE, 0, sizeof(int)*size, A_h, 0, NULL, NULL);
+    status = clEnqueueWriteBuffer(queue, B_d, CL_TRUE, 0, sizeof(int)*size, B_h, 0, NULL, NULL);
+    if (status != CL_SUCCESS)
+        std::cout << "ENQUEUE: " << status << std::endl;
+
+    const char* kernelSource = R"(
+    __kernel void simple_add(__global const int *A,
+                             __global const int *B,
+                             __global int *C,
+                             const unsigned int n) {
+        int i = get_global_id(0);
+        if (i < n) {
+            C[i] = A[i] + B[i];
+        }
+    })";
+
+    cl_program program = clCreateProgramWithSource(context, 1, &kernelSource, NULL, &status);
+    if (status != CL_SUCCESS)
+        std::cout << "PROGRAM: " << status << std::endl;
+
+    status = clBuildProgram(program, 1, &(devices[0]), NULL, NULL, NULL);
+    if (status != CL_SUCCESS)
+        std::cout << "BUILD: " << status << std::endl;
+
+    cl_kernel kernel = clCreateKernel(program, "simple_add", &status);
+    if (status != CL_SUCCESS)
+       std::cout << "KERNEL: " << status << std::endl;
+       
+    clSetKernelArg(kernel, 0, sizeof(cl_mem), (void*)&A_d);
+    clSetKernelArg(kernel, 1, sizeof(cl_mem), (void*)&B_d);
+    clSetKernelArg(kernel, 2, sizeof(cl_mem), (void*)&C_d);
+    clSetKernelArg(kernel, 3, sizeof(unsigned int), (void*)&size);
+
+    size_t global_size = size;
+    clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, NULL, 0, NULL, NULL);
+    clEnqueueReadBuffer(queue, C_d, CL_TRUE, 0, sizeof(int)*size, C_h, 0, NULL, NULL);
+
+    clReleaseMemObject(A_d);
+    clReleaseMemObject(B_d);
+    clReleaseMemObject(C_d);
+    clReleaseKernel(kernel);
+    clReleaseProgram(program);
+    clReleaseCommandQueue(queue);
+    clReleaseContext(context);
+
+    for (int i = 0; i < size; i++) {
+        std::cout << "C[" << i << "] = " << C_h[i] << std::endl;
+    }
     return 0;
 
     // Get flags
