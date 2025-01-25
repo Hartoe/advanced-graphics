@@ -4,6 +4,7 @@
 
 #include <time.h>
 #include <stdlib.h>
+#include <vector>
 #ifdef __APPLE__
     #include <OpenCL/cl.h>
 #elif defined _WIN32 || defined _WIN64
@@ -31,6 +32,45 @@ static std::string readStringFromFile(
     return source;
 }
 
+__declspec(align(64)) struct Tri 
+{ 
+    vec3 v0, v1, v2, c;
+};
+
+
+bool loadOBJ(const char* path, Tri *tris) {
+    FILE* file = fopen(path, "r");
+    if (file == NULL)
+        return false;
+
+    std::vector<vec3> vertices;
+    int i =0;
+    while (true) {
+        char lineHeader[128];
+        int res = fscanf(file, "%s", lineHeader);
+        if (res == EOF)
+            break;
+
+        if (strcmp(lineHeader, "v") == 0) {
+            double x, y, z;
+            fscanf(file, "%lf %lf %lf\n", &x, &y, &z);
+            vertices.push_back(vec3(x, y, z));
+        } else if (strcmp(lineHeader, "f") == 0) {
+            unsigned int v1, v2, v3;
+            fscanf(file, "%d %d %d\n", &v1, &v2, &v3);
+            Tri t;
+            t.v0 = vertices[v1];
+            t.v1 = vertices[v2];
+            t.v2 = vertices[v3];
+            t.c = (t.v0 + t.v1 + t.v2) / 3;
+            tris[i] = t;
+        }
+    }
+    fclose(file);
+
+    return true;
+}
+
 int main(int argc, char* argv[])
 {
     settings stng = parse_args(argc, argv);
@@ -45,6 +85,11 @@ int main(int argc, char* argv[])
     // Read in .trace file
     std::clog << "Loading Scene..." << std::flush;
     hittable_list world = load_scene(cam, stng.infile.c_str(), stng.model.c_str());
+    Tri tris[1024];
+    loadOBJ("models/duck.obj", tris);
+    int n_tris = 1024;
+    std::cout <<"n_tris:"<< n_tris << std::endl;
+    
     cam.initialize();
     auto clkBuild = clock();
     std::clog <<"\rBuilding Done in "<< double(clkBuild - clkStart) / CLOCKS_PER_SEC << "s !                " << std::endl;
@@ -128,12 +173,13 @@ int main(int argc, char* argv[])
        std::cout << "KERNEL: " << status << std::endl;
        
     clSetKernelArg(kernel, 0, sizeof(cl_mem), (void*)&out_img);
-    clSetKernelArg(kernel, 1, sizeof(unsigned int), (void*)&cam.width);
-    clSetKernelArg(kernel, 2, sizeof(unsigned int), (void*)&cam.height);
-    clSetKernelArg(kernel, 3, sizeof(point), (void*)&cam.lookfrom);
-    clSetKernelArg(kernel, 4, sizeof(point), (void*)&cam.pixel00_loc);
-    clSetKernelArg(kernel, 5, sizeof(point), (void*)&cam.pixel_delta_u);
-    clSetKernelArg(kernel, 6, sizeof(point), (void*)&cam.pixel_delta_v);
+    clSetKernelArg(kernel, 1, sizeof(Tri) * n_tris, (void*)&tris);//TODO Something goes wrong here, probably the struct mismatch, removing this argument makes the image white, as expected
+    clSetKernelArg(kernel, 2, sizeof(unsigned int), (void*)&cam.width);
+    clSetKernelArg(kernel, 3, sizeof(unsigned int), (void*)&cam.height);
+    clSetKernelArg(kernel, 4, sizeof(point), (void*)&cam.lookfrom);
+    clSetKernelArg(kernel, 5, sizeof(point), (void*)&cam.pixel00_loc);
+    clSetKernelArg(kernel, 6, sizeof(point), (void*)&cam.pixel_delta_u);
+    clSetKernelArg(kernel, 7, sizeof(point), (void*)&cam.pixel_delta_v);
 
     size_t global_size = n_pixels;
     clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, NULL, 0, NULL, NULL);
