@@ -7,7 +7,6 @@
 
 class camera {
     private:
-        int height;
         double pixel_sample_scale;
         point center;
         point pixel00_loc;
@@ -17,38 +16,6 @@ class camera {
         vec3 defocus_disk_u;
         vec3 defocus_disk_v;
 
-        void initialize() {           
-            height = int(width / aspect_ratio);
-            height = (height < 1) ? 1 : height;
-
-            pixel_sample_scale = 1.0 / samples_per_pixel;
-            stats = std::make_shared<stat_collector>(stat_collector(samples_per_pixel));
-            stats->samples_per_pixel = samples_per_pixel;
-
-            center = lookfrom;
-
-            auto theta = degrees_to_radian(vfov);
-            auto h = std::tan(theta/2);
-            auto viewport_height = 2 * h * focus_dist;
-            auto viewport_width = viewport_height * (double(width)/height);
-
-            w = unit_vector(lookfrom- lookat);
-            u = unit_vector(cross(vup, w));
-            v = cross(w, u);
-
-            auto viewport_u = viewport_width * u;
-            auto viewport_v = viewport_height * -v;
-
-            pixel_delta_u = viewport_u / width;
-            pixel_delta_v = viewport_v / height;
-
-            auto viewport_upper_left = center - (focus_dist * w) - viewport_u/2 -viewport_v/2;
-            pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
-
-            auto defocus_radius = focus_dist * std::tan(degrees_to_radian(defocus_angle / 2));
-            defocus_disk_u = u * defocus_radius;
-            defocus_disk_v = v * defocus_radius;
-        }
 
         ray get_ray(int x, int y) const {
             auto offset = sample_square();
@@ -92,6 +59,7 @@ class camera {
     public:
         double aspect_ratio = 1.0;
         int width = 100;
+        int height;
         int samples_per_pixel = 1;
         int max_depth = 10;
         double vfov = 90;
@@ -101,6 +69,38 @@ class camera {
         double defocus_angle = 0;
         double focus_dist = 10;
         std::shared_ptr<stat_collector> stats;
+        void initialize() {           
+            height = int(width / aspect_ratio);
+            height = (height < 1) ? 1 : height;
+
+            pixel_sample_scale = 1.0 / samples_per_pixel;
+            stats = std::make_shared<stat_collector>(stat_collector(samples_per_pixel));
+            stats->samples_per_pixel = samples_per_pixel;
+
+            center = lookfrom;
+
+            auto theta = degrees_to_radian(vfov);
+            auto h = std::tan(theta/2);
+            auto viewport_height = 2 * h * focus_dist;
+            auto viewport_width = viewport_height * (double(width)/height);
+
+            w = unit_vector(lookfrom- lookat);
+            u = unit_vector(cross(vup, w));
+            v = cross(w, u);
+
+            auto viewport_u = viewport_width * u;
+            auto viewport_v = viewport_height * -v;
+
+            pixel_delta_u = viewport_u / width;
+            pixel_delta_v = viewport_v / height;
+
+            auto viewport_upper_left = center - (focus_dist * w) - viewport_u/2 -viewport_v/2;
+            pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+
+            auto defocus_radius = focus_dist * std::tan(degrees_to_radian(defocus_angle / 2));
+            defocus_disk_u = u * defocus_radius;
+            defocus_disk_v = v * defocus_radius;
+        }
 
         void render(const hittable& world, const char* path = "image.ppm") {
             initialize();
