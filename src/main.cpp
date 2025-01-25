@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
     if (status != CL_SUCCESS)
         std::cout << "ENQUEUE: " << status << std::endl;
 
-    std::string s =readStringFromFile("src/samplekernel.cl");
+    std::string s =readStringFromFile("src/kernels.cl");
     const char* kernelSource = s.c_str();
 
 
@@ -130,6 +130,10 @@ int main(int argc, char* argv[])
     clSetKernelArg(kernel, 0, sizeof(cl_mem), (void*)&out_img);
     clSetKernelArg(kernel, 1, sizeof(unsigned int), (void*)&cam.width);
     clSetKernelArg(kernel, 2, sizeof(unsigned int), (void*)&cam.height);
+    clSetKernelArg(kernel, 3, sizeof(point), (void*)&cam.lookfrom);
+    clSetKernelArg(kernel, 4, sizeof(point), (void*)&cam.pixel00_loc);
+    clSetKernelArg(kernel, 5, sizeof(point), (void*)&cam.pixel_delta_u);
+    clSetKernelArg(kernel, 6, sizeof(point), (void*)&cam.pixel_delta_v);
 
     size_t global_size = n_pixels;
     clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, NULL, 0, NULL, NULL);

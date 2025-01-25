@@ -9,9 +9,6 @@ class camera {
     private:
         double pixel_sample_scale;
         point center;
-        point pixel00_loc;
-        vec3 pixel_delta_u;
-        vec3 pixel_delta_v;
         vec3 u, v, w;
         vec3 defocus_disk_u;
         vec3 defocus_disk_v;
@@ -66,6 +63,9 @@ class camera {
         point lookfrom = point(0, 0, 0);
         point lookat = point(0, 0, -1);
         vec3 vup = point(0, 1, 0);
+        point pixel00_loc;
+        vec3 pixel_delta_u;
+        vec3 pixel_delta_v;
         double defocus_angle = 0;
         double focus_dist = 10;
         std::shared_ptr<stat_collector> stats;
