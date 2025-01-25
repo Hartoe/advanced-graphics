@@ -10,6 +10,27 @@
     #include <CL/cl.h>
 #endif
 
+static std::string readStringFromFile(
+    const std::string& filename )
+{
+    std::ifstream is(filename, std::ios::binary);
+    if (!is.good()) {
+        printf("Couldn't open file '%s'!\n", filename.c_str());
+        return "";
+    }
+
+    size_t filesize = 0;
+    is.seekg(0, std::ios::end);
+    filesize = (size_t)is.tellg();
+    is.seekg(0, std::ios::beg);
+
+    std::string source{
+        std::istreambuf_iterator<char>(is),
+        std::istreambuf_iterator<char>() };
+
+    return source;
+}
+
 int main(int argc, char* argv[])
 {
     settings stng = parse_args(argc, argv);
@@ -63,48 +84,19 @@ int main(int argc, char* argv[])
     if (status != CL_SUCCESS)
         std::cout << "QUEUE: " << status << std::endl;
 
-    // int size = 10;
-    // int A_h[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-    // int B_h[] = { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 };
-    // int C_h[size];
-
     int n_pixels = cam.width * cam.height;
     int out_img_size = n_pixels * sizeof(uint);
     // int out_img_size = cam.width * cam.height * 4;
     std::cout << "Size: " << n_pixels << std::endl;
     cl_mem out_img = clCreateBuffer(context, CL_MEM_WRITE_ONLY, out_img_size, NULL, &status);
-
-    // cl_mem A_d = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(int) * size, NULL, &status);
-    // cl_mem B_d = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(int) * size, NULL, &status);
-    // cl_mem C_d = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(int) * size, NULL, &status);
     if (status != CL_SUCCESS)
         std::cout << "BUFFER: " << status << std::endl;
-
-    // status = clEnqueueWriteBuffer(queue, A_d, CL_TRUE, 0, sizeof(int)*size, A_h, 0, NULL, NULL);
-    // status = clEnqueueWriteBuffer(queue, B_d, CL_TRUE, 0, sizeof(int)*size, B_h, 0, NULL, NULL);
     if (status != CL_SUCCESS)
         std::cout << "ENQUEUE: " << status << std::endl;
 
-    // const char* kernelSource = R"(
-    // __kernel void simple_add(__global const int *A,
-    //                          __global const int *B,
-    //                          __global int *C,
-    //                          const unsigned int n) {
-    //     int i = get_global_id(0);
-    //     if (i < n) {
-    //         C[i] = A[i] + B[i];
-    //     }
-    // })";
-    const char* kernelSource = R"(
-    __kernel void render( __global uint* out_img, const unsigned int width, const unsigned int height )
-{
-    // plot a pixel into the target array in GPU memory
-    int threadIdx = get_global_id( 0 );
-    int x = threadIdx % width;
-    int y = threadIdx / width;
-    int red = x / 3, green = y / 3;
-    out_img[x + y * width] = (red << 16) + (green << 8);
-})";
+    std::string s =readStringFromFile("src/samplekernel.cl");
+    const char* kernelSource = s.c_str();
+
 
     cl_program program = clCreateProgramWithSource(context, 1, &kernelSource, NULL, &status);
     if (status != CL_SUCCESS)
@@ -135,10 +127,6 @@ int main(int argc, char* argv[])
     if (status != CL_SUCCESS)
        std::cout << "KERNEL: " << status << std::endl;
        
-    // clSetKernelArg(kernel, 0, sizeof(cl_mem), (void*)&A_d);
-    // clSetKernelArg(kernel, 1, sizeof(cl_mem), (void*)&B_d);
-    // clSetKernelArg(kernel, 2, sizeof(cl_mem), (void*)&C_d);
-    // clSetKernelArg(kernel, 3, sizeof(unsigned int), (void*)&size);
     clSetKernelArg(kernel, 0, sizeof(cl_mem), (void*)&out_img);
     clSetKernelArg(kernel, 1, sizeof(unsigned int), (void*)&cam.width);
     clSetKernelArg(kernel, 2, sizeof(unsigned int), (void*)&cam.height);
@@ -149,18 +137,10 @@ int main(int argc, char* argv[])
     clEnqueueReadBuffer(queue, out_img, CL_TRUE, 0, out_img_size, out_img_cpu, 0, NULL, NULL);
 
     clReleaseMemObject(out_img);
-    // clReleaseMemObject(A_d);
-    // clReleaseMemObject(B_d);
-    // clReleaseMemObject(C_d);
     clReleaseKernel(kernel);
     clReleaseProgram(program);
     clReleaseCommandQueue(queue);
     clReleaseContext(context);
-
-    // for (int i = 0; i < size; i++) {
-    //     std::cout << "C[" << i << "] = " << C_h[i] << std::endl;
-    // }
-
 
     std::ofstream image(stng.outfile);
 
