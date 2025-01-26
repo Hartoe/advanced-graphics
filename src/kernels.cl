@@ -58,7 +58,8 @@ inline uint RGB32FtoRGB8( float3 c )
 
 float3 Trace( struct Ray* ray, __global struct Tri* tri)
 {
-    for (uint i = 0; i < 5; i++)
+    return ray->D;
+    for (uint i = 0; i < 508; i++)
     {
         IntersectTri(ray, &tri[i]);
 
@@ -69,7 +70,9 @@ float3 Trace( struct Ray* ray, __global struct Tri* tri)
         return (float3)( 0, 0, 0 );
 }
 
-__kernel void render( __global uint* target, __global struct Tri* triData, uint width, uint height, float3 camPos, float3 p0, float3 dx, float3 dy)
+// __kernel void render( __global uint* target, uint width, uint height, float3 camPos, float3 p0, float3 dx, float3 dy)
+__kernel void render( __global struct Tri* triData, __global uint* target, uint width, uint height, float3 camPos, float3 p0, float3 dx, float3 dy)
+// __kernel void render( __global uint* target, __global struct Tri* triData, uint width, uint height, float3 camPos, float3 p0, float3 dx, float3 dy)
 {
     // plot a pixel into the target array in GPU memory
     int threadIdx = get_global_id( 0 );
@@ -82,8 +85,9 @@ __kernel void render( __global uint* target, __global struct Tri* triData, uint 
     ray.D = normalize( pixelPos - ray.O );
     ray.hit.t = 1e30f; // 1e30f denotes 'no hit'
     // trace the primary ray
-    // float3 color = Trace( &ray, triData);
+    float3 color = Trace( &ray, triData);
     // plot the result
-    target[x + y * width] = RGB32FtoRGB8((float3)( 1, 1, 1 ));
+    // target[x + y * width] = RGB32FtoRGB8(color);
+    target[x + y * width] = RGB32FtoRGB8(dx);
     // target[x + y * width] = RGB32FtoRGB8( (float3)( (pixelPos.z - p0.z) / (p0.z + dy.z * height), (pixelPos.x - p0.x) / (p0.x + dx.x * width),  0) );
 }

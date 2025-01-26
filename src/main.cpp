@@ -32,11 +32,13 @@ static std::string readStringFromFile(
     return source;
 }
 
-__declspec(align(64)) struct Tri 
+struct Tri 
 { 
-    vec3 v0, v1, v2, c;
+    float v0x, v0y, v0z;
+    float v1x, v1y, v1z;
+    float v2x, v2y, v2z;
+    float cx, cy, cz;
 };
-
 
 bool loadOBJ(const char* path, Tri *tris) {
     FILE* file = fopen(path, "r");
@@ -59,13 +61,24 @@ bool loadOBJ(const char* path, Tri *tris) {
             unsigned int v1, v2, v3;
             fscanf(file, "%d %d %d\n", &v1, &v2, &v3);
             Tri t;
-            t.v0 = vertices[v1];
-            t.v1 = vertices[v2];
-            t.v2 = vertices[v3];
-            t.c = (t.v0 + t.v1 + t.v2) / 3;
+            t.v0x = vertices[v1].x();
+            t.v0y = vertices[v1].y();
+            t.v0z = vertices[v1].z();
+            t.v1x = vertices[v2].x();
+            t.v1y = vertices[v2].y();
+            t.v1z = vertices[v2].z();
+            t.v2x = vertices[v3].x();
+            t.v2y = vertices[v3].y();
+            t.v2z = vertices[v3].z();
+            t.cx = (t.v0x + t.v1x + t.v2x) / 3;
+            t.cy = (t.v0y + t.v1y + t.v2y) / 3;
+            t.cz = (t.v0z + t.v1z + t.v2z) / 3;
             tris[i] = t;
+            i++;
         }
     }
+    std::cout << "tri size:" << sizeof(Tri) << std::endl;
+    std::cout << "tri count:" << i << std::endl;
     fclose(file);
 
     return true;
@@ -85,9 +98,9 @@ int main(int argc, char* argv[])
     // Read in .trace file
     std::clog << "Loading Scene..." << std::flush;
     hittable_list world = load_scene(cam, stng.infile.c_str(), stng.model.c_str());
-    Tri tris[1024];
+    Tri tris[508];
     loadOBJ("models/duck.obj", tris);
-    int n_tris = 1024;
+    int n_tris = 508;
     std::cout <<"n_tris:"<< n_tris << std::endl;
     
     cam.initialize();
@@ -134,6 +147,7 @@ int main(int argc, char* argv[])
     // int out_img_size = cam.width * cam.height * 4;
     std::cout << "Size: " << n_pixels << std::endl;
     cl_mem out_img = clCreateBuffer(context, CL_MEM_WRITE_ONLY, out_img_size, NULL, &status);
+    cl_mem tri_buff = clCreateBuffer(context, CL_MEM_READ_ONLY, n_tris * sizeof(Tri), NULL, &status);
     if (status != CL_SUCCESS)
         std::cout << "BUFFER: " << status << std::endl;
     if (status != CL_SUCCESS)
@@ -164,7 +178,6 @@ int main(int argc, char* argv[])
         printf("%s\n", log);
     }
     status = clGetProgramBuildInfo(program, devices[0], CL_PROGRAM_BUILD_LOG, 0, NULL, NULL);
-    // status = clGetProgramBuildInfo(program, &(devices[0]), CL_PROGRAM_BUILD_LOG, 0, NULL, NULL);
     if (status != CL_SUCCESS)
        std::cout << "BUILDINFO: " << status << std::endl;
 
@@ -172,14 +185,16 @@ int main(int argc, char* argv[])
     if (status != CL_SUCCESS)
        std::cout << "KERNEL: " << status << std::endl;
        
-    clSetKernelArg(kernel, 0, sizeof(cl_mem), (void*)&out_img);
-    clSetKernelArg(kernel, 1, sizeof(Tri) * n_tris, (void*)&tris);//TODO Something goes wrong here, probably the struct mismatch, removing this argument makes the image white, as expected
+    clSetKernelArg(kernel, 0, sizeof(cl_mem), (void*)&tri_buff);//TODO Something goes wrong here, probably the struct mismatch, removing this argument makes the image white, as expected
+    clSetKernelArg(kernel, 1, sizeof(cl_mem), (void*)&out_img);
     clSetKernelArg(kernel, 2, sizeof(unsigned int), (void*)&cam.width);
     clSetKernelArg(kernel, 3, sizeof(unsigned int), (void*)&cam.height);
     clSetKernelArg(kernel, 4, sizeof(point), (void*)&cam.lookfrom);
     clSetKernelArg(kernel, 5, sizeof(point), (void*)&cam.pixel00_loc);
     clSetKernelArg(kernel, 6, sizeof(point), (void*)&cam.pixel_delta_u);
     clSetKernelArg(kernel, 7, sizeof(point), (void*)&cam.pixel_delta_v);
+    std::cout << "dx" << cam.pixel_delta_u << std::endl;
+    std::cout << "dy" << cam.pixel_delta_v << std::endl;
 
     size_t global_size = n_pixels;
     clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, NULL, 0, NULL, NULL);
