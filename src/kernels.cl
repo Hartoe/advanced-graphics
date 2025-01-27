@@ -1,3 +1,4 @@
+#include <opencl-c-base.h>
 struct Intersection
 {
     float t;                    // intersection distance along ray
@@ -62,13 +63,9 @@ float3 Trace( struct Ray* ray, __global struct Tri* tri)
     // return ray->D;
     for (uint i = 0; i < 508; i++)
     {
-        if (IntersectTri(ray, &tri[i])) {
-            return (float3)( 1, 1, 1 );
-        }
-
+        IntersectTri(ray, &tri[i]);
     }
-    return (float3)( 0, 0, 0 );
-    if (ray->hit.t < 9999999)
+    if (ray->hit.t < 9999)
         return (float3)( 1, 1, 1 );
     else
         return (float3)( 0, 0, 0 );
@@ -134,7 +131,6 @@ __kernel void traverse( __global struct BVHNode* BVH, __global struct Tri* triDa
 
     int stack[64];
     int* stackPtr = stack;
-    *stackPtr++ = NULL;
     int index = 0;
     
     do
@@ -172,9 +168,8 @@ __kernel void traverse( __global struct BVHNode* BVH, __global struct Tri* triDa
     while (index != NULL);
 }
 
-// __kernel void render( __global uint* target, uint width, uint height, float3 camPos, float3 p0, float3 dx, float3 dy)
+// Based on Jacco Bikkers gpu implementation of a bvh
 __kernel void render( __global struct Tri* triData, __global uint* target, uint width, uint height, float3 camPos, float3 p0, float3 du, float3 dv)
-// __kernel void render( __global uint* target, __global struct Tri* triData, uint width, uint height, float3 camPos, float3 p0, float3 dx, float3 dy)
 {
     // plot a pixel into the target array in GPU memory
     int threadIdx = get_global_id( 0 );
@@ -189,8 +184,40 @@ __kernel void render( __global struct Tri* triData, __global uint* target, uint 
     // trace the primary ray
     float3 color = Trace( &ray, triData);
     // plot the result
-    // target[x + y * width] = RGB32FtoRGB8(color);
-    target[x + y * width] = RGB32FtoRGB8(du*10);
-    // target[x + y * width] = RGB32FtoRGB8((float3) (dx.x,0,0));
-    // target[x + y * width] = RGB32FtoRGB8( (float3)( (pixelPos.z - p0.z) / (p0.z + dy.z * height), (pixelPos.x - p0.x) / (p0.x + dx.x * width),  0) );
+    target[x + y * width] = RGB32FtoRGB8(color);
+}
+
+uint3 to_morton_part(int val, int offset){
+    uint3 res;
+    for (uint i = 0; i < sizeof(uint); i++){
+        uint v = 1 & (val >> 0);
+        uint t = 0 * 3 + offset;
+        uint lt = t % sizeof(uint);
+        uint v2 = v << lt;
+        int ax = t / 3;
+        if (ax == 0) {
+            res.x = res.x | v2;
+        } else if (ax == 1) {
+            res.y = res.y | v2;
+        } else {
+            res.z = res.z | v2;
+        }
+    }
+    return res;
+}
+
+__kernel void to_morton_codes(__global struct Tri* triData, __global uint3* target, uint count)
+{
+    int threadIdx = get_global_id( 0 );
+    int tri_idx = threadIdx % count;
+    struct Tri t = triData[tri_idx];
+    int3 val = convert_int3( (float3) (t.cx, t.cy, t.cz));
+    uint3 px = to_morton_part(val.x, 0);
+    uint3 py = to_morton_part(val.y, 1);
+    uint3 pz = to_morton_part(val.z, 2);
+    uint3 combined;
+    combined.x = px.x | py.x | pz.x;
+    combined.y = px.y | py.y | pz.y;
+    combined.z = px.x | py.z | pz.z;
+    target[tri_idx] = combined;
 }

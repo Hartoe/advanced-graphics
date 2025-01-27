@@ -164,6 +164,20 @@ int main(int argc, char* argv[])
     cl_mem tri_buff = clCreateBuffer(context, CL_MEM_READ_ONLY, n_tris * sizeof(Tri), NULL, &status);
     if (status != CL_SUCCESS)
         std::cout << "BUFFER: " << status << std::endl;
+    status = clEnqueueWriteBuffer(queue, tri_buff, CL_TRUE, 0, sizeof(Tri)*n_tris, tris, 0, NULL, NULL);
+    Tri tris2[2];
+    tris2[0].cx = 1;
+    tris2[0].cy = 1;
+    tris2[0].cz = 1;
+    tris2[1].cx = 2;
+    tris2[1].cy = 2;
+    tris2[1].cz = 2;
+    uint codes[8];
+    cl_mem out_codes = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 2 * 4 * sizeof(uint), NULL, &status);
+    cl_mem tri_buff2 = clCreateBuffer(context, CL_MEM_READ_ONLY, 2 * sizeof(Tri), NULL, &status);
+    if (status != CL_SUCCESS)
+        std::cout << "BUFFER: " << status << std::endl;
+    status = clEnqueueWriteBuffer(queue, tri_buff2, CL_TRUE, 0, sizeof(Tri)*2, tris2, 0, NULL, NULL);
     if (status != CL_SUCCESS)
         std::cout << "ENQUEUE: " << status << std::endl;
 
@@ -198,6 +212,14 @@ int main(int argc, char* argv[])
     cl_kernel kernel = clCreateKernel(program, "render", &status);
     if (status != CL_SUCCESS)
        std::cout << "KERNEL: " << status << std::endl;
+
+    cl_kernel kernel2 = clCreateKernel(program, "to_morton_codes", &status);
+    if (status != CL_SUCCESS)
+       std::cout << "KERNEL: " << status << std::endl;
+    clSetKernelArg(kernel2, 0, sizeof(cl_mem), (void*)&tri_buff2);
+    clSetKernelArg(kernel2, 1, sizeof(cl_mem), (void*)&out_codes);
+    uint count2 = 2;
+    clSetKernelArg(kernel2, 2, sizeof(unsigned int), (void*)&count2);
        
     clSetKernelArg(kernel, 0, sizeof(cl_mem), (void*)&tri_buff);
     clSetKernelArg(kernel, 1, sizeof(cl_mem), (void*)&out_img);
@@ -221,7 +243,10 @@ int main(int argc, char* argv[])
     size_t global_size = n_pixels;
     clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, NULL, 0, NULL, NULL);
     unsigned int out_img_cpu[n_pixels];
+    size_t global_size2 = 2;
+    clEnqueueNDRangeKernel(queue, kernel2, 1, NULL, &global_size2, NULL, 0, NULL, NULL);
     clEnqueueReadBuffer(queue, out_img, CL_TRUE, 0, out_img_size, out_img_cpu, 0, NULL, NULL);
+    clEnqueueReadBuffer(queue, out_codes, CL_TRUE, 0, 8*sizeof(uint), codes, 0, NULL, NULL);
 
     clReleaseMemObject(out_img);
     clReleaseKernel(kernel);
@@ -229,10 +254,12 @@ int main(int argc, char* argv[])
     clReleaseCommandQueue(queue);
     clReleaseContext(context);
 
+    for (int i = 0; i < 8; i++){
+        std::cout << "codes: " << codes[i] << std::endl;
+    }
     std::ofstream image(stng.outfile);
 
     image << "P3\n" << cam.width << ' ' << cam.height << "\n255\n";
-    // Draw write colors to image
     for (int i = 0; i < n_pixels; i++){
         int c = out_img_cpu[i];
         int r, g, b;
