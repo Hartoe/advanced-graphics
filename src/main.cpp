@@ -40,6 +40,20 @@ struct Tri
     float cx, cy, cz;
 };
 
+struct F3
+{
+    float x, y, z;
+    float dummy;
+};
+
+F3 tof3(vec3 v){
+    F3 res;
+    res.x = v.x();
+    res.y = v.y();
+    res.z = v.z();
+    return res;
+}
+
 bool loadOBJ(const char* path, Tri *tris) {
     FILE* file = fopen(path, "r");
     if (file == NULL)
@@ -185,16 +199,24 @@ int main(int argc, char* argv[])
     if (status != CL_SUCCESS)
        std::cout << "KERNEL: " << status << std::endl;
        
-    clSetKernelArg(kernel, 0, sizeof(cl_mem), (void*)&tri_buff);//TODO Something goes wrong here, probably the struct mismatch, removing this argument makes the image white, as expected
+    clSetKernelArg(kernel, 0, sizeof(cl_mem), (void*)&tri_buff);
     clSetKernelArg(kernel, 1, sizeof(cl_mem), (void*)&out_img);
     clSetKernelArg(kernel, 2, sizeof(unsigned int), (void*)&cam.width);
     clSetKernelArg(kernel, 3, sizeof(unsigned int), (void*)&cam.height);
-    clSetKernelArg(kernel, 4, sizeof(point), (void*)&cam.lookfrom);
-    clSetKernelArg(kernel, 5, sizeof(point), (void*)&cam.pixel00_loc);
-    clSetKernelArg(kernel, 6, sizeof(point), (void*)&cam.pixel_delta_u);
-    clSetKernelArg(kernel, 7, sizeof(point), (void*)&cam.pixel_delta_v);
-    std::cout << "dx" << cam.pixel_delta_u << std::endl;
+    F3 camO = tof3(cam.lookfrom);
+    F3 camtl = tof3(cam.pixel00_loc);
+    F3 camdu = tof3(cam.pixel_delta_u);
+    F3 camdv = tof3(cam.pixel_delta_v);
+    clSetKernelArg(kernel, 4, sizeof(F3), (void*)&camO);
+    clSetKernelArg(kernel, 5, sizeof(F3), (void*)&camtl);
+    clSetKernelArg(kernel, 6, sizeof(F3), (void*)&camdu);
+    clSetKernelArg(kernel, 7, sizeof(F3), (void*)&camdv);
+    std::cout << "dx.x" << cam.pixel_delta_u.x() << std::endl;
+    std::cout << "dx.y" << cam.pixel_delta_u.y() << std::endl;
+    std::cout << "dx.z" << cam.pixel_delta_u.z() << std::endl;
     std::cout << "dy" << cam.pixel_delta_v << std::endl;
+    std::cout << "from" << cam.lookfrom << std::endl;
+    std::cout << "00" << cam.pixel00_loc << std::endl;
 
     size_t global_size = n_pixels;
     clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, NULL, 0, NULL, NULL);
