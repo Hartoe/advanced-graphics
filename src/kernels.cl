@@ -74,6 +74,104 @@ float3 Trace( struct Ray* ray, __global struct Tri* tri)
         return (float3)( 0, 0, 0 );
 }
 
+bool intersect(struct BVHNode* node, struct Ray* ray)
+{
+    float adinv = 1.0 / ray->D.x;
+    float t0 = (node->minx - ray->O.x) * adinv;
+    float t1 = (node->maxx - ray->O.x) * adinv;
+    if (t0 < t1)
+    {
+        if (t0 > ray->hit.u) ray->hit.u = t0;
+        if (t1 < ray->hit.v) ray->hit.v = t1;
+    }
+    else
+    {
+        if (t1 > ray->hit.u) ray->hit.u = t1;
+        if (t0 < ray->hit.v) ray->hit.v = t0;
+    }
+    if (ray->hit.v <= ray->hit.u)
+        return false;
+
+    adinv = 1.0 / ray->D.y;
+    t0 = (node->miny - ray->O.y) * adinv;
+    t1 = (node->maxy - ray->O.y) * adinv;
+    if (t0 < t1)
+    {
+        if (t0 > ray->hit.u) ray->hit.u = t0;
+        if (t1 < ray->hit.v) ray->hit.v = t1;
+    }
+    else
+    {
+        if (t1 > ray->hit.u) ray->hit.u = t1;
+        if (t0 < ray->hit.v) ray->hit.v = t0;
+    }
+    if (ray->hit.v <= ray->hit.u)
+        return false;
+
+    adinv = 1.0 / ray->D.z;
+    t0 = (node->minz - ray->O.z) * adinv;
+    t1 = (node->maxz - ray->O.z) * adinv;
+    if (t0 < t1)
+    {
+        if (t0 > ray->hit.u) ray->hit.u = t0;
+        if (t1 < ray->hit.v) ray->hit.v = t1;
+    }
+    else
+    {
+        if (t1 > ray->hit.u) ray->hit.u = t1;
+        if (t0 < ray->hit.v) ray->hit.v = t0;
+    }
+    if (ray->hit.v <= ray->hit.u)
+        return false;
+
+    return true;
+}
+
+__kernel void traverse( __global struct BVHNode* BVH, __global struct Tri* triData, __global const struct Ray *rays, __global float3* output )
+{
+    // Get the ray used by the instance
+    struct Ray ray = rays[get_global_id(0)];
+
+    int stack[64];
+    int* stackPtr = stack;
+    *stackPtr++ = NULL;
+    int index = 0;
+    
+    do
+    {
+        struct BVHNode node = BVH[index];
+        // It is a leaf
+        if (node.triCount > 0)
+        {
+            bool hit;
+            for (int i = 0; i < node.triCount; i++)
+            {
+                hit = IntersectTri(&ray, &triData[node.leftFirst+i]);
+            }
+            output[get_global_id(0)] = (hit) ? (float3)(1, 1, 1) : (float3)(0, 0, 0);
+        }
+        // It is a child
+        else
+        {
+            struct BVHNode childL = BVH[node.leftFirst];
+            struct BVHNode childR = BVH[node.leftFirst+1];
+
+            bool overlapL = intersect(&childL, &ray);
+            bool overlapR = intersect(&childR, &ray);
+
+            if (!overlapL && !overlapR)
+                index = *--stackPtr;
+            else
+            {
+                node = (overlapL) ? childL : childR;
+                if (overlapL && overlapR)
+                    *stackPtr++ = node.leftFirst+1;
+            }
+        }
+    }
+    while (index != NULL);
+}
+
 // __kernel void render( __global uint* target, uint width, uint height, float3 camPos, float3 p0, float3 dx, float3 dy)
 __kernel void render( __global struct Tri* triData, __global uint* target, uint width, uint height, float3 camPos, float3 p0, float3 du, float3 dv)
 // __kernel void render( __global uint* target, __global struct Tri* triData, uint width, uint height, float3 camPos, float3 p0, float3 dx, float3 dy)
