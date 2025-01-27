@@ -157,7 +157,7 @@ int main(int argc, char* argv[])
         std::cout << "QUEUE: " << status << std::endl;
 
     int n_pixels = cam.width * cam.height;
-    int out_img_size = n_pixels * sizeof(uint);
+    int out_img_size = n_pixels * sizeof(unsigned int);
     // int out_img_size = cam.width * cam.height * 4;
     std::cout << "Size: " << n_pixels << std::endl;
     cl_mem out_img = clCreateBuffer(context, CL_MEM_WRITE_ONLY, out_img_size, NULL, &status);
@@ -220,7 +220,7 @@ int main(int argc, char* argv[])
 
     size_t global_size = n_pixels;
     clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, NULL, 0, NULL, NULL);
-    uint out_img_cpu[n_pixels];
+    unsigned int out_img_cpu[n_pixels];
     clEnqueueReadBuffer(queue, out_img, CL_TRUE, 0, out_img_size, out_img_cpu, 0, NULL, NULL);
 
     clReleaseMemObject(out_img);
