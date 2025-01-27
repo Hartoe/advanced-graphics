@@ -1,3 +1,3 @@
 main: *.cpp
-	rm -f raytracer
-	g++ -std=c++11 main.cpp -o main
+	rm -f main
+	g++ -std=c++11 -fms-extensions src/*.cpp -framework OpenCL -o main
